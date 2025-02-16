@@ -1,0 +1,26 @@
+{
+	"name": "dot.js",
+	"version": "1.0.0",
+	"scripts": {
+		"start": "nodemon src/server.ts --port=1977",
+		"build": "tsc",
+		"preview": "node dist/server.js",
+		"pnpm": "pnpm i"
+	},
+	"dependencies": {
+		"@types/ws": "^8.5.14",
+		"ethers": "^6.13.5",
+		"fastify": "^5.2.1",
+		"ws": "^8.18.0"
+	},
+	"devDependencies": {
+		"@types/node": "^22.13.4",
+		"ts-node": "^10.9.2",
+		"typescript": "^5.7.3"
+	},
+	"nodemonConfig": {
+		"ignore": [
+			"dot-data.json"
+		]
+	}
+}
