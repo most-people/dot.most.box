@@ -3,7 +3,7 @@
 	"version": "1.0.0",
 	"scripts": {
 		"dev": "tsc -p tsconfig.dotClient.json --watch",
-		"start": "nodemon src/server.ts --port=1977",
+		"start": "nodemon src/server.ts --port=1970",
 		"build": "tsc",
 		"pnpm": "pnpm i"
 	},

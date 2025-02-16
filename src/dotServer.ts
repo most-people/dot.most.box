@@ -1,5 +1,4 @@
 import WebSocket from 'ws'
-import crypto from 'crypto'
 import fs from 'fs'
 import path from 'path'
 import { Server } from 'http'
@@ -7,7 +6,7 @@ import { ethers } from 'ethers'
 
 interface DataEntry {
     value: any
-    hash: string
+    sig: string
     timestamp: number
 }
 
@@ -15,7 +14,8 @@ interface Message {
     type: 'put' | 'get' | 'sync' | 'get_response' | 'ack' | 'error'
     key?: string
     value?: any
-    hash?: string
+    sig?: string
+    timestamp?: number
     message?: string
 }
 
@@ -78,36 +78,45 @@ export class DotServer {
         const parts = key.split('/')
         if (parts.length < 2) return false
         const address = parts[0]
-        return ethers.isAddress(address)
+        return ethers.isAddress(address.toLowerCase())
     }
 
     private handleMessage(msg: Message, sender: WebSocket): void {
         switch (msg.type) {
             case 'put':
                 try {
-                    if (msg.key && msg.value !== undefined) {
+                    if (msg.key && msg.value !== undefined && msg.sig && msg.timestamp) {
                         if (this.checkDotKey(msg.key)) {
-                            const hash = this.putData(msg.key, msg.value)
+                            const success = this.putData(msg.key, msg.value, msg.sig, msg.timestamp)
 
-                            // 发送确认消息给发送者
-                            sender.send(
-                                JSON.stringify({
-                                    type: 'ack',
-                                    key: msg.key,
-                                    hash,
-                                } as Message),
-                            )
+                            if (success) {
+                                // 发送确认消息给发送者
+                                sender.send(
+                                    JSON.stringify({
+                                        type: 'ack',
+                                        key: msg.key,
+                                    } as Message),
+                                )
 
-                            // 广播同步消息给所有客户端
-                            this.broadcast(
-                                {
-                                    type: 'sync',
-                                    key: msg.key,
-                                    value: msg.value,
-                                    hash,
-                                },
-                                null,
-                            )
+                                // 广播同步消息给所有客户端
+                                this.broadcast(
+                                    {
+                                        type: 'sync',
+                                        key: msg.key,
+                                        value: msg.value,
+                                        sig: msg.sig,
+                                        timestamp: msg.timestamp,
+                                    },
+                                    null,
+                                )
+                            } else {
+                                sender.send(
+                                    JSON.stringify({
+                                        type: 'error',
+                                        message: '签名验证失败',
+                                    } as Message),
+                                )
+                            }
                         } else {
                             sender.send(
                                 JSON.stringify({
@@ -153,11 +162,13 @@ export class DotServer {
 
             case 'sync':
                 try {
-                    if (msg.key && msg.value !== undefined && msg.hash) {
+                    if (msg.key && msg.value !== undefined && msg.sig && msg.timestamp) {
                         const currentData = this.data.get(msg.key)
-                        if (!currentData || currentData.hash !== msg.hash) {
-                            this.putData(msg.key, msg.value)
-                            this.broadcast(msg, sender)
+                        if (!currentData || currentData.timestamp < msg.timestamp) {
+                            const success = this.putData(msg.key, msg.value, msg.sig, msg.timestamp)
+                            if (success) {
+                                this.broadcast(msg, sender)
+                            }
                         }
                     }
                 } catch (err) {
@@ -167,13 +178,52 @@ export class DotServer {
         }
     }
 
-    private putData(key: string, value: any): string {
-        const hash = crypto.createHash('sha256').update(JSON.stringify(value)).digest('hex')
-        const entry = { value, hash, timestamp: Date.now() }
-        this.data.set(key, entry)
-        this.hasChanges = true
-        this.saveData()
-        return hash
+    private putData(key: string, value: any, sig: string, timestamp: number): boolean {
+        try {
+            // 获取地址(key的第一部分)
+            const address = key.split('/')[0]
+
+            // 重建完整的消息对象
+            const messageObject = {
+                key,
+                value,
+                timestamp,
+            }
+
+            // 将完整消息对象转换为 JSON 字符串
+            const message = JSON.stringify(messageObject)
+
+            // 验证签名
+            const recoveredAddress = ethers.verifyMessage(message, sig)
+
+            // 检查恢复的地址是否匹配 key 中的地址
+            if (recoveredAddress.toLowerCase() !== address.toLowerCase()) {
+                console.error('dot.js: 签名验证失败 - 地址不匹配')
+                return false
+            }
+
+            // 验证时间戳
+            const currentTime = Date.now()
+            if (Math.abs(currentTime - timestamp) > 5 * 60 * 1000) {
+                // 5分钟有效期
+                console.error('dot.js: 签名验证失败 - 时间戳过期')
+                return false
+            }
+
+            // 存储数据
+            const entry: DataEntry = {
+                value,
+                sig,
+                timestamp,
+            }
+            this.data.set(key, entry)
+            this.hasChanges = true
+            this.saveData()
+            return true
+        } catch (err) {
+            console.error('dot.js: 签名验证失败:', err)
+            return false
+        }
     }
 
     private getData(key: string): any | null {

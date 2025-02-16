@@ -20,6 +20,8 @@
         type: 'put' | 'get' | 'get_response' | 'sync' | 'ack' | 'error'
         key: string
         value?: any
+        sig?: string
+        timestamp?: number // 添加时间戳字段
         message?: string
     }
 
@@ -39,6 +41,7 @@
         private messageQueue: Message[]
         private isConnected: boolean
         private WebSocketImpl: typeof WebSocket
+        private signer: any | null = null
 
         constructor(url: string) {
             this.url = url
@@ -59,6 +62,11 @@
             }
 
             this.connect()
+        }
+
+        // 设置签名器
+        setSigner(signer: any) {
+            this.signer = signer
         }
 
         // 简化的用户方法，不做地址校验
@@ -175,19 +183,34 @@
             })
         }
 
-        put(key: string, value: any): Promise<void> {
-            return new Promise((resolve, reject) => {
-                try {
-                    this.sendMessage({
-                        type: 'put',
-                        key,
-                        value,
-                    })
-                    resolve()
-                } catch (err) {
-                    reject(err)
+        async put(key: string, value: any): Promise<void> {
+            if (!this.signer) {
+                throw new Error('需要设置签名器才能执行 put 操作')
+            }
+
+            try {
+                // 创建包含完整信息的消息对象
+                const timestamp = Date.now()
+                const messageObject = {
+                    key,
+                    value,
+                    timestamp,
                 }
-            })
+
+                // 对完整消息进行签名
+                const message = JSON.stringify(messageObject)
+                const sig = await this.signer.signMessage(message)
+
+                this.sendMessage({
+                    type: 'put',
+                    key,
+                    value,
+                    sig,
+                    timestamp, // 添加时间戳到发送的消息中
+                })
+            } catch (err) {
+                throw err
+            }
         }
 
         on(
