@@ -76,8 +76,8 @@ export class DotServer {
 
     private checkDotKey(key: string): boolean {
         const parts = key.split('/')
-        if (parts.length < 3) return false
-        const address = parts[1]
+        if (parts.length < 2) return false
+        const address = parts[0]
         return ethers.isAddress(address)
     }
 

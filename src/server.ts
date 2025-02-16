@@ -1,5 +1,7 @@
 import os from 'os'
+import path from 'path'
 import fastify from 'fastify'
+import fastifyStatic from '@fastify/static'
 
 import { DotServer } from './dotServer'
 
@@ -17,22 +19,22 @@ const server = fastify({
 })
 
 // 配置静态文件服务
-// server.register(fastifyStatic, {
-//     root: path.join(__dirname, 'public'),
-//     prefix: '/',
-// })
+server.register(fastifyStatic, {
+    root: path.join(__dirname, 'public'),
+    prefix: '/',
+})
 
 // API 路由
-server.get('/', async () => {
+server.get('/hello', async () => {
     return { hello: 'world' }
 })
 
-// 启动服务器
+// 启动服务
 const start = async () => {
     try {
         await server.listen({ port: PORT, host: '::' })
 
-        // 初始化 GunServer
+        // 初始化 DotServer
         const dotServer = new DotServer(server.server)
 
         // 遍历所有网络接口

@@ -1,14 +1,13 @@
 {
     "compilerOptions": {
-        "target": "ES2015",
+        "target": "ES2024",
         "module": "commonjs",
-        "outDir": "./dist",
+        "outDir": "./src/public",
         "rootDir": "./src",
         "strict": true,
         "esModuleInterop": true,
         "skipLibCheck": true,
         "forceConsistentCasingInFileNames": true
     },
-    "include": ["src/**/*"],
-    "exclude": ["src/public/dotClient.js"]
+    "include": ["src/dotClient.ts"]
 }

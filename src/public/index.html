@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>api.most.box</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+        <link rel="stylesheet" href="/index.css" />
+    </head>
+    <body>
+        <div id="app">
+            <h2>☭ 为人民服务</h2>
+            <a target="_blank" href="/hello">https://api.most.box/hello</a>
+
+            <h1 id="hello">IPFS + Filecoin + Fastify + Dot.js + Smart Contracts = Fully DApp</h1>
+            <input type="text" id="inputName" />
+            <button id="btnSave">Save</button>
+        </div>
+        <script src="/dotClient.js"></script>
+        <script>
+            const dotClient = new DotClient('http://localhost:1977')
+
+            // 创建用户实例
+            const dot = dotClient.dot('0x872367639d18a1Bb92132D88DD218C829a4c2e4d')
+
+            btnSave.addEventListener('click', () => {
+                // 存储用户数据
+                dot.put('profile', {
+                    name: inputName.value,
+                    bio: 'Web3 Developer',
+                })
+            })
+
+            // 读取用户数据
+            dot.once('profile', (profile) => {
+                console.log('用户配置:', profile)
+                inputName.value = profile.name
+            })
+
+            // 监听用户数据变化
+            dot.on('profile', (profile) => {
+                inputName.value = profile.name
+                console.log('用户数据更新:', profile)
+            })
+        </script>
+    </body>
+</html>
