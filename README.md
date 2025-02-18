@@ -1,8 +1,28 @@
 # dot.js
 
-https://fastify.dev/
+## 安装
 
 ```bash
-# 开发环境 监听文件变化
-npm i -g nodemon
+npm install dot.js
+```
+
+## 快速开始
+
+服务端
+
+```js
+import { DotServer } from 'dot-protocol'
+import http from 'http'
+
+const server = http.createServer()
+new DotServer(server)
+server.listen(3000)
+```
+
+客户端
+
+```js
+import { DotClient } from 'dot.js'
+
+const client = new DotClient('http://localhost:3000')
 ```
