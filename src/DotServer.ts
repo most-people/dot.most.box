@@ -2,7 +2,8 @@ import WebSocket from 'ws'
 import fs from 'fs'
 import path from 'path'
 import { Server } from 'http'
-import { ethers } from 'ethers'
+import { isAddress, verifyMessage } from 'ethers'
+import './MostWallet'
 
 interface DataEntry {
     value: any
@@ -19,7 +20,7 @@ interface Message {
     message?: string
 }
 
-export class DotServer {
+class DotServer {
     private peers: Set<WebSocket>
     private data: Map<string, DataEntry>
     private dataFile: string
@@ -78,7 +79,7 @@ export class DotServer {
         const parts = key.split('/')
         if (parts.length < 2) return false
         const address = parts[0]
-        return ethers.isAddress(address.toLowerCase())
+        return isAddress(address.toLowerCase())
     }
 
     private handleMessage(msg: Message, sender: WebSocket): void {
@@ -194,7 +195,7 @@ export class DotServer {
             const message = JSON.stringify(messageObject)
 
             // 验证签名
-            const recoveredAddress = ethers.verifyMessage(message, sig)
+            const recoveredAddress = verifyMessage(message, sig)
 
             // 检查恢复的地址是否匹配 key 中的地址
             if (recoveredAddress.toLowerCase() !== address.toLowerCase()) {
@@ -275,3 +276,5 @@ export class DotServer {
         })
     }
 }
+
+export default DotServer

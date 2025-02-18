@@ -1,6 +1,4 @@
 // 为了确保在浏览器环境中可以正常使用，保留 IIFE 包装
-// ;(function (global) {
-
 // 定义 WebSocket 接口
 interface WebSocketLike {
     onopen: ((this: WebSocket, ev: Event) => any) | null
@@ -36,7 +34,7 @@ interface DotMethods {
     off: (key: string, callback?: (value: any) => void) => DotClient
 }
 
-export class DotClient {
+class DotClient {
     private url: string
     private ws!: WebSocketLike
     private listeners: Map<string, Set<Listener>>
@@ -273,5 +271,3 @@ if (typeof global !== 'undefined') {
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = DotClient
 }
-
-// })(typeof window !== 'undefined' ? window : typeof global !== 'undefined' ? global : this)

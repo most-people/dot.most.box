@@ -1,2 +1,6 @@
-export { DotClient } from './dotClient'
-export { DotServer } from './dotServer'
+const DotClient = require('./DotClient')
+const DotServer = require('./DotServer')
+export default {
+    DotClient,
+    DotServer,
+}
