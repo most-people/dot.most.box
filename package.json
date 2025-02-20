@@ -4,7 +4,6 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
-    "dev": "tsc --watch",
     "start": "nodemon server.ts --port=1976",
     "build": "tsc",
     "prepublish": "npm run build"
