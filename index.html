@@ -1,129 +1,111 @@
 <!DOCTYPE html>
 <html>
-    <head>
-        <title>dot.most.box</title>
-        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
-        <style>
-            body {
-                background: rgb(33, 37, 43);
-                color: aliceblue;
-                margin: 0;
-            }
 
-            a {
-                cursor: pointer;
-                color: inherit;
-                text-decoration: none;
-            }
+<head>
+    <title>dot.most.box</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+    <style>
+        body {
+            background: rgb(33, 37, 43);
+            color: aliceblue;
+            margin: 0;
+        }
 
-            h1,
-            h2,
-            h3,
-            h4,
-            h5,
-            h6 {
-                margin: 0;
-            }
+        a {
+            cursor: pointer;
+            color: inherit;
+            text-decoration: none;
+        }
 
-            #app {
-                padding: 16px;
-                display: flex;
-                justify-content: center;
-                align-items: center;
-                flex-direction: column;
-                gap: 16px;
-            }
-        </style>
-    </head>
-    <body>
-        <div id="app">
-            <h2>☭ 为人民服务</h2>
-            <h1 id="hello">
-                IPFS + Filecoin + Fastify + Dot.most.box + Smart Contracts = Fully DApp
-            </h1>
+        h1,
+        h2,
+        h3,
+        h4,
+        h5,
+        h6 {
+            margin: 0;
+        }
 
-            <div className="wallet">
-                <textarea id="inputMnemonic" placeholder="请输入助记词"></textarea>
-            </div>
-            <div className="address">
-                <button id="btnInitialize">初始化钱包</button>
-                <span id="addressDisplay"></span>
-            </div>
+        #app {
+            padding: 16px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            gap: 16px;
+        }
+    </style>
+</head>
 
-            <div class="name">
-                <input type="text" id="inputName" placeholder="输入名称" />
-                <button id="btnSave" disabled>保存</button>
-            </div>
+<body>
+    <div id="app">
+        <h2>☭ 为人民服务</h2>
+        <h1 id="hello">
+            IPFS + Filecoin + Fastify + Dot.most.box + Smart Contracts = Fully DApp
+        </h1>
+
+        <input id="inputUsername" placeholder="请输入用户名"></input>
+        <input id="inputPassword" placeholder="请输入密码"></input>
+        <button id="btnInitialize">登录</button>
+        <span id="addressDisplay"></span>
+
+        <div class="name">
+            <input type="text" id="inputName" placeholder="输入名称" />
+            <button id="btnSave" disabled>保存</button>
         </div>
+    </div>
 
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.13.5/ethers.umd.min.js"></script>
-        <script src="/dist/dotClient.js"></script>
-        <script>
-            const dotClient = new DotClient('http://localhost:1976')
-            let userAddress = ''
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.13.5/ethers.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tweetnacl/1.0.2/nacl-fast.min.js"></script>
+    <script src="/dist/index.js"></script>
+    <script>
+        const dotClient = new Dot.DotClient('http://localhost:1976')
+        let userAddress = ''
 
+        // 初始化钱包
+        btnInitialize.addEventListener('click', async () => {
+            const wallet = Dot.mostWallet(inputUsername.value, inputPassword.value)
             // 初始化钱包
-            btnInitialize.addEventListener('click', async () => {
-                try {
-                    const mnemonic = inputMnemonic.value.trim()
-                    if (!mnemonic) {
-                        alert('请输入助记词')
-                        return
-                    }
+            const signer = ethers.HDNodeWallet.fromPhrase(wallet.mnemonic)
+            // 设置签名器
+            dotClient.setSigner(signer)
 
-                    // 初始化钱包
-                    const wallet = ethers.HDNodeWallet.fromPhrase(mnemonic)
-                    // 设置签名器
-                    dotClient.setSigner(wallet)
+            userAddress = wallet.address
+            addressDisplay.textContent = `当前地址: ${userAddress}`
 
-                    userAddress = wallet.address
-                    addressDisplay.textContent = `当前地址: ${userAddress}`
+            // 创建用户实例
+            const dot = dotClient.dot(userAddress)
 
-                    // 创建用户实例
-                    const dot = dotClient.dot(userAddress)
-
-                    // 读取用户数据
-                    dot.once('profile', (profile) => {
-                        console.log('用户配置:', profile)
-                        if (profile && profile.name) {
-                            inputName.value = profile.name
-                        }
-                    })
-
-                    // 监听用户数据变化
-                    dot.on('profile', (profile) => {
-                        if (profile && profile.name) {
-                            inputName.value = profile.name
-                        }
-                        console.log('用户数据更新:', profile)
-                    })
-
-                    // 启用保存按钮
-                    btnSave.disabled = false
-                } catch (err) {
-                    console.error('初始化钱包失败:', err)
-                    alert('初始化钱包失败: ' + err.message)
+            // 读取用户数据
+            dot.once('profile', (profile) => {
+                console.log('用户配置:', profile)
+                if (profile && profile.name) {
+                    inputName.value = profile.name
                 }
             })
 
-            btnSave.addEventListener('click', async () => {
-                if (!userAddress) {
-                    alert('请先初始化钱包')
-                    return
+            // 监听用户数据变化
+            dot.on('profile', (profile) => {
+                if (profile && profile.name) {
+                    inputName.value = profile.name
                 }
-
-                try {
-                    const dot = dotClient.dot(userAddress)
-                    // 存储用户数据
-                    await dot.put('profile', {
-                        name: inputName.value,
-                        bio: 'Web3 Developer',
-                    })
-                } catch (err) {
-                    console.error('保存失败:', err)
-                    alert('保存失败: ' + err.message)
-                }
+                console.log('用户数据更新:', profile)
             })
-        </script>
-    </body>
+
+            // 启用保存按钮
+            btnSave.disabled = false
+        })
+
+        btnSave.addEventListener('click', async () => {
+            const dot = dotClient.dot(userAddress)
+            // 存储用户数据
+            dot.put('profile', {
+                name: inputName.value,
+                bio: 'Web3 Developer',
+            })
+
+        })
+    </script>
+</body>
+
 </html>

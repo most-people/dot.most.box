@@ -3,24 +3,23 @@ import fs from 'fs'
 import path from 'path'
 import { Server } from 'http'
 import { isAddress, verifyMessage } from 'ethers'
-import './MostWallet'
 
-interface DataEntry {
+export interface DataEntry {
     value: any
     sig: string
     timestamp: number
 }
 
-interface Message {
+export interface Message {
     type: 'put' | 'get' | 'sync' | 'get_response' | 'ack' | 'error'
-    key?: string
+    key: string
     value?: any
     sig?: string
     timestamp?: number
     message?: string
 }
 
-class DotServer {
+export class DotServer {
     private peers: Set<WebSocket>
     private data: Map<string, DataEntry>
     private dataFile: string
@@ -276,5 +275,3 @@ class DotServer {
         })
     }
 }
-
-export default DotServer

@@ -1,4 +1,5 @@
-// 为了确保在浏览器环境中可以正常使用，保留 IIFE 包装
+import { Message } from './DotServer'
+
 // 定义 WebSocket 接口
 interface WebSocketLike {
     onopen: ((this: WebSocket, ev: Event) => any) | null
@@ -15,16 +16,6 @@ interface Listener {
     once: boolean
 }
 
-// 定义消息接口
-interface Message {
-    type: 'put' | 'get' | 'get_response' | 'sync' | 'ack' | 'error'
-    key: string
-    value?: any
-    sig?: string
-    timestamp?: number // 添加时间戳字段
-    message?: string
-}
-
 // 定义 DotClient 的方法接口
 interface DotMethods {
     get: (key: string) => Promise<any>
@@ -34,7 +25,7 @@ interface DotMethods {
     off: (key: string, callback?: (value: any) => void) => DotClient
 }
 
-class DotClient {
+export class DotClient {
     private url: string
     private ws!: WebSocketLike
     private listeners: Map<string, Set<Listener>>
@@ -260,14 +251,4 @@ class DotClient {
 
         return this
     }
-}
-
-// 检查环境并导出
-if (typeof global !== 'undefined') {
-    ;(global as any).DotClient = DotClient
-}
-
-// 兼容 CommonJS 和 ES Module
-if (typeof module !== 'undefined' && module.exports) {
-    module.exports = DotClient
 }

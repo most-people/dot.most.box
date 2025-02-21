@@ -1,8 +1,14 @@
 import os from 'os'
+import { fileURLToPath } from 'node:url'
+import path from 'node:path'
 import fastify from 'fastify'
 import fastifyStatic from '@fastify/static'
+import Dot from './dist/index.js'
 
-import DotServer from './src/DotServer'
+const { DotServer } = Dot
+
+const __filename = fileURLToPath(import.meta.url) // 获取当前文件路径
+const __dirname = path.dirname(__filename) // 获取当前目录路径
 
 // 解析命令行参数
 const args = process.argv.slice(2)
@@ -40,7 +46,7 @@ const start = async () => {
         let ipv4 = ''
         let ipv6 = ''
         for (const key in interfaces) {
-            for (const iface of interfaces[key] as os.NetworkInterfaceInfo[]) {
+            for (const iface of interfaces[key]) {
                 if (!iface.internal) {
                     // 确保该地址是IPv6且不是内部地址
                     if (ipv6 === '' && 'IPv6' === iface.family) {

@@ -16,6 +16,7 @@ export interface MostWallet {
     address: string
     public_key: string
     private_key: string
+    mnemonic: string
 }
 
 export const mostWallet = (username: string, password: string): MostWallet => {
@@ -41,12 +42,13 @@ export const mostWallet = (username: string, password: string): MostWallet => {
         address,
         public_key,
         private_key,
+        mnemonic,
     }
     return mostWallet
 }
 
-export const encode = (message: string, public_key: string, private_key: string) => {
-    const bytes = new TextEncoder().encode(message)
+export const encode = (text: string, public_key: string, private_key: string) => {
+    const bytes = new TextEncoder().encode(text)
     const nonce = nacl.randomBytes(nacl.box.nonceLength)
     const encrypted = nacl.box(
         bytes,
@@ -60,6 +62,7 @@ export const encode = (message: string, public_key: string, private_key: string)
     }
     return ['mp://2', encodeBase64(nonce), encodeBase64(encrypted)].join('.')
 }
+
 export const decode = (data: string, public_key: string, private_key: string) => {
     const [prefix, nonce64, encrypted64] = data.split('.')
     if (prefix !== 'mp://2') {
@@ -78,11 +81,3 @@ export const decode = (data: string, public_key: string, private_key: string) =>
     }
     return new TextDecoder().decode(decrypted)
 }
-
-// const wallet1 = mostWallet('most', '1')
-// const wallet2 = mostWallet('most', '2')
-
-// const data = encode('hello', wallet1.public_key, wallet2.private_key)
-// console.log('data:', data)
-// const res = decode(data, wallet2.public_key, wallet1.private_key)
-// console.log('res:', res)
