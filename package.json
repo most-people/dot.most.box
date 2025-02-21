@@ -1,14 +1,14 @@
 {
   "name": "dot.most.box",
-  "version": "0.0.2",
+  "version": "0.0.5",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
     "start": "nodemon server.mjs --port=1976",
     "dev": "rollup -c -w",
     "build": "rollup -c",
-    "prepublish": "npm run build",
-    "pnpm": "pnpm i"
+    "prepublish": "rm -rf dist && rm -rf node_modules && pnpm i  && npm run build",
+    "pnpm": "pnpm i --production"
   },
   "dependencies": {
     "ethers": "^6.13.5",

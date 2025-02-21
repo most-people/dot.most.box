@@ -29,7 +29,7 @@ export class DotServer {
     constructor(httpServer: Server) {
         this.peers = new Set()
         this.data = new Map()
-        this.dataFile = path.join(__dirname, 'dot-data.json')
+        this.dataFile = path.join(process.cwd(), 'dot-data.json')
         this.loadData()
 
         // 定期保存数据
