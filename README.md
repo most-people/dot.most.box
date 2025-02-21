@@ -11,18 +11,20 @@ npm install dot.most.box
 服务端
 
 ```js
-import { DotServer } from 'dot.most.box'
+import Dot from 'dot.most.box'
 import http from 'http'
 
+const { DotServer } = Dot
 const server = http.createServer()
 new DotServer(server)
-server.listen(3000)
+server.listen(1976)
 ```
 
 客户端
 
 ```js
-import { DotClient } from 'dot.most.box'
+import Dot from 'dot.most.box'
 
-const client = new DotClient('http://localhost:3000')
+const { DotClient } = Dot
+const client = new DotClient('http://localhost:1976')
 ```
