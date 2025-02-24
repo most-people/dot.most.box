@@ -43,7 +43,7 @@ export class DotServer {
         this.server = new WebSocket.Server({ server: httpServer })
 
         this.server.on('connection', (socket: WebSocket) => {
-            console.log('dot.js: 新客户端已连接')
+            console.log('dot: 新客户端已连接')
             this.peers.add(socket)
 
             socket.on('message', (message: WebSocket.Data) => {
@@ -51,22 +51,22 @@ export class DotServer {
                     const msg = JSON.parse(message.toString()) as Message
                     this.handleMessage(msg, socket)
                 } catch (err) {
-                    console.error('dot.js: 处理消息时出错:', err)
+                    console.error('dot: 处理消息时出错:', err)
                 }
             })
 
             socket.on('close', () => {
-                console.log('dot.js: 客户端断开连接')
+                console.log('dot: 客户端断开连接')
                 this.peers.delete(socket)
             })
 
             socket.on('error', (error: Error) => {
-                console.error('dot.js: WebSocket 错误:', error)
+                console.error('dot: WebSocket 错误:', error)
             })
         })
 
         process.on('SIGINT', () => {
-            console.log('dot.js: 正在保存数据并关闭服务器...')
+            console.log('dot: 正在保存数据并关闭服务器...')
             if (this.hasChanges) {
                 this.saveData()
             }
@@ -127,7 +127,7 @@ export class DotServer {
                         }
                     }
                 } catch (err) {
-                    console.error('dot.js: put 操作出错:', err)
+                    console.error('dot: put 操作出错:', err)
                     sender.send(
                         JSON.stringify({
                             type: 'error',
@@ -150,7 +150,7 @@ export class DotServer {
                         )
                     }
                 } catch (err) {
-                    console.error('dot.js: get 操作出错:', err)
+                    console.error('dot: get 操作出错:', err)
                     sender.send(
                         JSON.stringify({
                             type: 'error',
@@ -172,7 +172,7 @@ export class DotServer {
                         }
                     }
                 } catch (err) {
-                    console.error('dot.js: sync 操作出错:', err)
+                    console.error('dot: sync 操作出错:', err)
                 }
                 break
         }
@@ -198,7 +198,7 @@ export class DotServer {
 
             // 检查恢复的地址是否匹配 key 中的地址
             if (recoveredAddress.toLowerCase() !== address.toLowerCase()) {
-                console.error('dot.js: 签名验证失败 - 地址不匹配')
+                console.error('dot: 签名验证失败 - 地址不匹配')
                 return false
             }
 
@@ -206,7 +206,7 @@ export class DotServer {
             const currentTime = Date.now()
             if (Math.abs(currentTime - timestamp) > 5 * 60 * 1000) {
                 // 5分钟有效期
-                console.error('dot.js: 签名验证失败 - 时间戳过期')
+                console.error('dot: 签名验证失败 - 时间戳过期')
                 return false
             }
 
@@ -221,7 +221,7 @@ export class DotServer {
             this.saveData()
             return true
         } catch (err) {
-            console.error('dot.js: 签名验证失败:', err)
+            console.error('dot: 签名验证失败:', err)
             return false
         }
     }
@@ -238,9 +238,9 @@ export class DotServer {
                 data[key] = entry
             }
             fs.writeFileSync(this.dataFile, JSON.stringify(data, null, 2))
-            console.log('dot.js: 用户数据已保存到文件')
+            console.log('dot: 用户数据已保存到文件')
         } catch (err) {
-            console.error('dot.js: 保存数据出错:', err)
+            console.error('dot: 保存数据出错:', err)
             this.hasChanges = true
         }
     }
@@ -255,10 +255,10 @@ export class DotServer {
                         this.data.set(key, entry)
                     }
                 }
-                console.log('dot.js: 已从文件加载用户数据')
+                console.log('dot: 已从文件加载用户数据')
             }
         } catch (err) {
-            console.error('dot.js: 加载数据出错:', err)
+            console.error('dot: 加载数据出错:', err)
         }
     }
 
@@ -269,7 +269,7 @@ export class DotServer {
                 try {
                     peer.send(msg)
                 } catch (err) {
-                    console.error('dot.js: 广播消息出错:', err)
+                    console.error('dot: 广播消息出错:', err)
                 }
             }
         })
