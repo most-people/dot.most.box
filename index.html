@@ -117,11 +117,15 @@
     <script>
         const dotClient = new Dot.DotClient('http://localhost:1976')
         let userAddress = ''
+        let public_key = ''
+        let private_key = ''
 
         btnLogin.addEventListener('click', async () => {
             // 初始化钱包
             const wallet = Dot.mostWallet(inputUsername.value, inputPassword.value, 'I know loss mnemonic will lose my wallet.')
             userAddress = wallet.address
+            public_key = wallet.public_key
+            private_key = wallet.private_key
             addressDisplay.textContent = `当前地址: ${userAddress}`
 
             const signer = ethers.HDNodeWallet.fromPhrase(wallet.mnemonic)
@@ -154,7 +158,7 @@
             try {
                 // 请求用户连接 MetaMask
                 const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' })
-                userAddress = accounts[0]
+
 
                 // 创建 ethers provider 和 signer
                 const provider = new ethers.BrowserProvider(window.ethereum)
@@ -163,6 +167,15 @@
                 // 设置签名器
                 dotClient.setSigner(signer)
 
+
+                const address = accounts[0]
+                const sig = await signer.signMessage(address)
+
+                const wallet = Dot.mostWallet(address, sig)
+                public_key = wallet.public_key
+                private_key = wallet.private_key
+
+                userAddress = accounts[0]
                 addressDisplay.textContent = `当前地址: ${userAddress}`
 
                 // 创建用户实例
