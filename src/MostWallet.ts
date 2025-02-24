@@ -19,7 +19,8 @@ export interface MostWallet {
     mnemonic: string
 }
 
-export const mostWallet = (username: string, password: string): MostWallet => {
+export const mostWallet = (username: string, password: string, danger?: string): MostWallet => {
+    const isDanger = danger === 'I know loss mnemonic will lose my wallet.'
     const p = toUtf8Bytes(password)
     const salt = toUtf8Bytes('/most.box/' + username)
     const kdf = pbkdf2(p, salt, 3, 32, 'sha512')
@@ -42,7 +43,7 @@ export const mostWallet = (username: string, password: string): MostWallet => {
         address,
         public_key,
         private_key,
-        mnemonic,
+        mnemonic: isDanger ? mnemonic : '',
     }
     return mostWallet
 }
