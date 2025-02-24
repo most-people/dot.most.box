@@ -114,17 +114,13 @@ export class DotClient {
             case 'sync':
                 const listeners = this.listeners.get(msg.key)
                 if (listeners) {
-                    listeners.forEach(({ callback, once }) => {
-                        if (
-                            (msg.type === 'get_response' && once) ||
-                            (msg.type === 'sync' && !once)
-                        ) {
-                            callback(msg.value)
-                            if (once) {
-                                this.off(msg.key, callback)
-                            }
+                    const listenersArray = Array.from(listeners)
+                    for (const { callback, once } of listenersArray) {
+                        callback(msg.value)
+                        if (once) {
+                            this.off(msg.key, callback)
                         }
-                    })
+                    }
                 }
                 break
 
