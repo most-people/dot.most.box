@@ -17,7 +17,7 @@ interface Listener {
 }
 
 // 定义 DotClient 的方法接口
-interface DotMethods {
+export interface DotMethods {
     get: (key: string) => Promise<any>
     put: (key: string, value: any) => Promise<void>
     on: (key: string, callback: (value: any) => void, options?: { once?: boolean }) => DotClient
