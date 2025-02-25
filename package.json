@@ -1,6 +1,6 @@
 {
   "name": "dot.most.box",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "files": [
@@ -12,8 +12,7 @@
     "start": "nodemon server.mjs --port=1976",
     "dev": "rollup -c -w",
     "build": "rollup -c",
-    "prepublish": "rm -rf dist && rm -rf node_modules && pnpm i && npm run build",
-    "publish": "npm publish",
+    "pre-publish": "rm -rf dist && rm -rf node_modules && pnpm i && npm run build",
     "pnpm": "pnpm i"
   },
   "dependencies": {
