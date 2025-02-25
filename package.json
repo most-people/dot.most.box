@@ -1,8 +1,13 @@
 {
   "name": "dot.most.box",
-  "version": "0.0.8",
+  "version": "0.0.9",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
   "scripts": {
     "start": "nodemon server.mjs --port=1976",
     "dev": "rollup -c -w",
