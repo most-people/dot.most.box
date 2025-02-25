@@ -4,7 +4,7 @@ import path from 'path'
 import { Server } from 'http'
 import { isAddress, verifyMessage } from 'ethers'
 
-export interface DataEntry {
+export interface DotData {
     value: any
     sig: string
     timestamp: number
@@ -21,7 +21,7 @@ export interface Message {
 
 export class DotServer {
     private peers: Set<WebSocket>
-    private data: Map<string, DataEntry>
+    private data: Map<string, DotData>
     private dataFile: string
     private server: WebSocket.Server
     private hasChanges: boolean = false
@@ -211,7 +211,7 @@ export class DotServer {
             }
 
             // 存储数据
-            const entry: DataEntry = {
+            const entry: DotData = {
                 value,
                 sig,
                 timestamp,
@@ -233,7 +233,7 @@ export class DotServer {
 
     private saveData(): void {
         try {
-            const data: Record<string, DataEntry> = {}
+            const data: Record<string, DotData> = {}
             for (const [key, entry] of this.data.entries()) {
                 data[key] = entry
             }
@@ -249,7 +249,7 @@ export class DotServer {
         try {
             if (fs.existsSync(this.dataFile)) {
                 const fileData = fs.readFileSync(this.dataFile, 'utf8')
-                const data = JSON.parse(fileData) as Record<string, DataEntry>
+                const data = JSON.parse(fileData) as Record<string, DotData>
                 for (const [key, entry] of Object.entries(data)) {
                     if (this.checkDotKey(key)) {
                         this.data.set(key, entry)
