@@ -3,9 +3,7 @@ import { fileURLToPath } from 'node:url'
 import path from 'node:path'
 import fastify from 'fastify'
 import fastifyStatic from '@fastify/static'
-import Dot from './dist/index.js'
-
-const { DotServer } = Dot
+import { DotServer } from './dist/server.js'
 
 const __filename = fileURLToPath(import.meta.url) // 获取当前文件路径
 const __dirname = path.dirname(__filename) // 获取当前目录路径

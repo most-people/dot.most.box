@@ -1,17 +1,14 @@
-import { DotServer } from './DotServer'
 import { DotClient } from './DotClient'
-import { mostWallet, encode, decode } from './MostWallet'
+import { mostWallet, mostEncode, mostDecode } from './MostWallet'
 
 export type { MostWallet } from './MostWallet'
-export type { DotServer, DotData } from './DotServer'
 export type { DotClient, DotMethods } from './DotClient'
 
 const Dot = {
-    DotServer,
     DotClient,
     mostWallet,
-    encode,
-    decode,
+    mostEncode,
+    mostDecode,
 }
 
 export default Dot

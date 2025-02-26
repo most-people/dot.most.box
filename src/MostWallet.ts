@@ -48,7 +48,7 @@ export const mostWallet = (username: string, password: string, danger?: string):
     return mostWallet
 }
 
-export const encode = (text: string, public_key: string, private_key: string) => {
+export const mostEncode = (text: string, public_key: string, private_key: string) => {
     const bytes = new TextEncoder().encode(text)
     const nonce = nacl.randomBytes(nacl.box.nonceLength)
     const encrypted = nacl.box(
@@ -64,7 +64,7 @@ export const encode = (text: string, public_key: string, private_key: string) =>
     return ['mp://2', encodeBase64(nonce), encodeBase64(encrypted)].join('.')
 }
 
-export const decode = (data: string, public_key: string, private_key: string) => {
+export const mostDecode = (data: string, public_key: string, private_key: string) => {
     const [prefix, nonce64, encrypted64] = data.split('.')
     if (prefix !== 'mp://2') {
         console.error('无效的密文')

@@ -2,8 +2,8 @@
 import typescript from '@rollup/plugin-typescript'
 import dts from 'rollup-plugin-dts'
 
-// 主配置
-const config = {
+// 客户端配置
+const clientConfig = {
     input: 'src/index.ts',
     output: [
         {
@@ -22,11 +22,38 @@ const config = {
     ],
 }
 
-// 声明文件生成配置
-const dtsConfig = {
+// 服务端配置
+const serverConfig = {
+    input: 'src/server.ts',
+    output: [
+        {
+            file: 'dist/server.js',
+            format: 'cjs', // 对于服务器端，使用 CommonJS 格式
+            exports: 'auto', // 修改为 'auto'，让 Rollup 自动确定导出模式
+        },
+    ],
+    plugins: [
+        typescript({
+            compilerOptions: {
+                declaration: false,
+            },
+        }),
+    ],
+    external: ['ws', 'fs', 'path', 'http', 'ethers'], // 添加 ethers 作为外部依赖
+}
+
+// 客户端声明文件配置
+const clientDtsConfig = {
     input: 'src/index.ts',
     output: [{ file: 'dist/index.d.ts', format: 'es' }],
     plugins: [dts()],
 }
 
-export default [config, dtsConfig]
+// 服务端声明文件配置
+const serverDtsConfig = {
+    input: 'src/server.ts',
+    output: [{ file: 'dist/server.d.ts', format: 'es' }],
+    plugins: [dts()],
+}
+
+export default [clientConfig, clientDtsConfig, serverConfig, serverDtsConfig]
