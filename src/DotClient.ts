@@ -1,4 +1,5 @@
 import { Message } from './DotServer'
+import { mostEncode, mostDecode } from './MostWallet'
 
 // 定义 WebSocket 接口
 interface WebSocketLike {
@@ -14,16 +15,23 @@ interface WebSocketLike {
 interface Listener {
     callback: (value: any) => void
     once: boolean
+    decrypt: boolean // 新增是否解密的标志
 }
 
 // 定义 DotClient 的方法接口
 export interface DotMethods {
     get: (key: string) => Promise<any>
-    put: (key: string, value: any) => Promise<void>
-    on: (key: string, callback: (value: any) => void, options?: { once?: boolean }) => DotClient
-    once: (key: string, callback: (value: any) => void) => DotClient
+    put: (key: string, value: any, encrypt?: boolean) => Promise<void>
+    on: (
+        key: string,
+        callback: (value: any) => void,
+        options?: { once?: boolean; decrypt?: boolean },
+    ) => DotClient
+    once: (key: string, callback: (value: any) => void, decrypt?: boolean) => DotClient
     off: (key: string, callback?: (value: any) => void) => DotClient
-    setSigner: (signer: any) => void  // 专门为此地址设置签名器
+    setSigner: (signer: any) => void // 设置签名器
+    setPubKey: (publicKey: string) => void // 设置公钥
+    setPrivKey: (privateKey: string) => void // 设置私钥
 }
 
 export class DotClient {
@@ -35,6 +43,9 @@ export class DotClient {
     private WebSocketImpl: typeof WebSocket
     // 使用 Map 存储每个地址对应的签名器
     private signers: Map<string, any> = new Map()
+    // 使用 Map 存储每个地址对应的公钥和私钥
+    private publicKeys: Map<string, string> = new Map()
+    private privateKeys: Map<string, string> = new Map()
 
     constructor(url: string) {
         this.url = url
@@ -57,30 +68,56 @@ export class DotClient {
         this.connect()
     }
 
-    // 为特定地址设置签名器
+    // 为指定地址设置签名器
     setAddressSigner(address: string, signer: any) {
         this.signers.set(address.toLowerCase(), signer)
     }
 
+    // 为指定地址设置公钥
+    setAddressPublicKey(address: string, publicKey: string) {
+        this.publicKeys.set(address.toLowerCase(), publicKey)
+    }
+
+    // 为指定地址设置私钥
+    setAddressPrivateKey(address: string, privateKey: string) {
+        this.privateKeys.set(address.toLowerCase(), privateKey)
+    }
+
     // 获取地址对应的签名器
     private getSignerForAddress(address: string): any {
-        // 查找地址特定的签名器
         return this.signers.get(address.toLowerCase())
+    }
+
+    // 获取地址对应的公钥
+    private getPublicKeyForAddress(address: string): string | undefined {
+        return this.publicKeys.get(address.toLowerCase())
+    }
+
+    // 获取地址对应的私钥
+    private getPrivateKeyForAddress(address: string): string | undefined {
+        return this.privateKeys.get(address.toLowerCase())
     }
 
     // 修改 dot 方法，返回增强的 DotMethods
     dot(address: string): DotMethods {
         return {
             get: (key: string) => this.get(`${address}/${key}`),
-            put: (key: string, value: any) => this.put(`${address}/${key}`, value),
-            on: (key: string, callback: (value: any) => void, options?: { once?: boolean }) =>
-                this.on(`${address}/${key}`, callback, options),
-            once: (key: string, callback: (value: any) => void) =>
-                this.once(`${address}/${key}`, callback),
+            put: (key: string, value: any, encrypt: boolean = false) =>
+                this.put(`${address}/${key}`, value, encrypt),
+            on: (
+                key: string,
+                callback: (value: any) => void,
+                options?: { once?: boolean; decrypt?: boolean },
+            ) => this.on(`${address}/${key}`, callback, options),
+            once: (key: string, callback: (value: any) => void, decrypt: boolean = false) =>
+                this.once(`${address}/${key}`, callback, decrypt),
             off: (key: string, callback?: (value: any) => void) =>
                 this.off(`${address}/${key}`, callback),
             // 添加为该地址设置专属签名器的方法
-            setSigner: (signer: any) => this.setAddressSigner(address, signer)
+            setSigner: (signer: any) => this.setAddressSigner(address, signer),
+            // 添加设置公钥和私钥的方法
+            setPubKey: (publicKey: string) => this.setAddressPublicKey(address, publicKey),
+            setPrivKey: (privateKey: string) => this.setAddressPrivateKey(address, privateKey),
         }
     }
 
@@ -125,8 +162,38 @@ export class DotClient {
                 const listeners = this.listeners.get(msg.key)
                 if (listeners) {
                     const listenersArray = Array.from(listeners)
-                    for (const { callback, once } of listenersArray) {
-                        callback(msg.value)
+                    for (const { callback, once, decrypt } of listenersArray) {
+                        let value = msg.value
+
+                        // 如果需要解密数据
+                        if (
+                            decrypt &&
+                            value &&
+                            typeof value === 'string' &&
+                            value.startsWith('mp://2')
+                        ) {
+                            try {
+                                // 从 key 中提取地址
+                                const address = msg.key.split('/')[0]
+                                const publicKey = this.getPublicKeyForAddress(address)
+                                const privateKey = this.getPrivateKeyForAddress(address)
+
+                                if (publicKey && privateKey) {
+                                    const decryptedStr = mostDecode(value, publicKey, privateKey)
+                                    if (decryptedStr) {
+                                        try {
+                                            value = JSON.parse(decryptedStr)
+                                        } catch (e) {
+                                            value = decryptedStr
+                                        }
+                                    }
+                                }
+                            } catch (err) {
+                                console.error('解密消息时出错:', err)
+                            }
+                        }
+
+                        callback(value)
                         if (once) {
                             this.off(msg.key, callback)
                         }
@@ -169,7 +236,13 @@ export class DotClient {
     get(key: string): Promise<any> {
         return new Promise((resolve, reject) => {
             try {
-                this.once(key, resolve)
+                // 自动解密的情况下，使用 decrypt 标志
+                const address = key.split('/')[0]
+                const hasKeys = Boolean(
+                    this.getPublicKeyForAddress(address) && this.getPrivateKeyForAddress(address),
+                )
+
+                this.once(key, resolve, hasKeys)
                 this.sendMessage({
                     type: 'get',
                     key,
@@ -180,7 +253,7 @@ export class DotClient {
         })
     }
 
-    async put(key: string, value: any): Promise<void> {
+    async put(key: string, value: any, encrypt: boolean = false): Promise<void> {
         // 从 key 中提取地址
         const address = key.split('/')[0]
         // 获取对应地址的 signer
@@ -191,11 +264,27 @@ export class DotClient {
         }
 
         try {
+            // 如果需要加密数据
+            let finalValue = value
+            if (encrypt) {
+                const publicKey = this.getPublicKeyForAddress(address)
+                const privateKey = this.getPrivateKeyForAddress(address)
+
+                if (!publicKey || !privateKey) {
+                    throw new Error(`没有为地址 ${address} 设置公钥或私钥，无法执行加密操作`)
+                }
+
+                // 如果值是对象，先序列化
+                const valueToEncrypt =
+                    typeof value === 'object' ? JSON.stringify(value) : String(value)
+                finalValue = mostEncode(valueToEncrypt, publicKey, privateKey)
+            }
+
             // 创建包含完整信息的消息对象
             const timestamp = Date.now()
             const messageObject = {
                 key,
-                value,
+                value: finalValue,
                 timestamp,
             }
 
@@ -206,7 +295,7 @@ export class DotClient {
             this.sendMessage({
                 type: 'put',
                 key,
-                value,
+                value: finalValue,
                 sig,
                 timestamp, // 添加时间戳到发送的消息中
             })
@@ -218,7 +307,7 @@ export class DotClient {
     on(
         key: string,
         callback: (value: any) => void,
-        { once = false }: { once?: boolean } = {},
+        { once = false, decrypt = false }: { once?: boolean; decrypt?: boolean } = {},
     ): DotClient {
         if (!this.listeners.has(key)) {
             this.listeners.set(key, new Set())
@@ -226,7 +315,7 @@ export class DotClient {
 
         const listeners = this.listeners.get(key)
         if (listeners) {
-            listeners.add({ callback, once })
+            listeners.add({ callback, once, decrypt })
         }
 
         this.sendMessage({
@@ -237,8 +326,8 @@ export class DotClient {
         return this
     }
 
-    once(key: string, callback: (value: any) => void): DotClient {
-        return this.on(key, callback, { once: true })
+    once(key: string, callback: (value: any) => void, decrypt: boolean = false): DotClient {
+        return this.on(key, callback, { once: true, decrypt })
     }
 
     off(key: string, callback?: (value: any) => void): DotClient {
