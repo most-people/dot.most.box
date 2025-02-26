@@ -20,7 +20,6 @@ interface Listener {
 
 // 定义 DotClient 的方法接口
 export interface DotMethods {
-    get: (key: string) => Promise<any>
     put: (key: string, value: any, encrypt?: boolean) => Promise<void>
     on: (
         key: string,
@@ -84,24 +83,23 @@ export class DotClient {
     }
 
     // 获取地址对应的签名器
-    private getSignerForAddress(address: string): any {
+    private getSigner(address: string): any {
         return this.signers.get(address.toLowerCase())
     }
 
     // 获取地址对应的公钥
-    private getPublicKeyForAddress(address: string): string | undefined {
+    private getPublicKey(address: string): string | undefined {
         return this.publicKeys.get(address.toLowerCase())
     }
 
     // 获取地址对应的私钥
-    private getPrivateKeyForAddress(address: string): string | undefined {
+    private getPrivateKey(address: string): string | undefined {
         return this.privateKeys.get(address.toLowerCase())
     }
 
     // 修改 dot 方法，返回增强的 DotMethods
     dot(address: string): DotMethods {
         return {
-            get: (key: string) => this.get(`${address}/${key}`),
             put: (key: string, value: any, encrypt: boolean = false) =>
                 this.put(`${address}/${key}`, value, encrypt),
             on: (
@@ -175,8 +173,8 @@ export class DotClient {
                             try {
                                 // 从 key 中提取地址
                                 const address = msg.key.split('/')[0]
-                                const publicKey = this.getPublicKeyForAddress(address)
-                                const privateKey = this.getPrivateKeyForAddress(address)
+                                const publicKey = this.getPublicKey(address)
+                                const privateKey = this.getPrivateKey(address)
 
                                 if (publicKey && privateKey) {
                                     const decryptedStr = mostDecode(value, publicKey, privateKey)
@@ -233,42 +231,21 @@ export class DotClient {
         }
     }
 
-    get(key: string): Promise<any> {
-        return new Promise((resolve, reject) => {
-            try {
-                // 自动解密的情况下，使用 decrypt 标志
-                const address = key.split('/')[0]
-                const hasKeys = Boolean(
-                    this.getPublicKeyForAddress(address) && this.getPrivateKeyForAddress(address),
-                )
-
-                this.once(key, resolve, hasKeys)
-                this.sendMessage({
-                    type: 'get',
-                    key,
-                })
-            } catch (err) {
-                reject(err)
-            }
-        })
-    }
-
     async put(key: string, value: any, encrypt: boolean = false): Promise<void> {
         // 从 key 中提取地址
         const address = key.split('/')[0]
         // 获取对应地址的 signer
-        const signer = this.getSignerForAddress(address)
+        const signer = this.getSigner(address)
 
         if (!signer) {
             throw new Error(`没有为地址 ${address} 设置签名器，无法执行 put 操作`)
         }
-
         try {
             // 如果需要加密数据
             let finalValue = value
             if (encrypt) {
-                const publicKey = this.getPublicKeyForAddress(address)
-                const privateKey = this.getPrivateKeyForAddress(address)
+                const publicKey = this.getPublicKey(address)
+                const privateKey = this.getPrivateKey(address)
 
                 if (!publicKey || !privateKey) {
                     throw new Error(`没有为地址 ${address} 设置公钥或私钥，无法执行加密操作`)
