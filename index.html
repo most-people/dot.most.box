@@ -120,9 +120,12 @@
         let public_key = ''
         let private_key = ''
 
-        const init = () => {
+        const init = (signer) => {
             // 创建用户实例
             const dot = dotClient.dot(userAddress)
+
+            // 设置签名器
+            dot.setSigner(signer)
 
             // 监听用户数据变化
             dot.on('profile', (data) => {
@@ -149,9 +152,7 @@
             addressDisplay.textContent = `当前地址: ${userAddress}`
 
             const signer = ethers.HDNodeWallet.fromPhrase(wallet.mnemonic)
-            // 设置签名器
-            dotClient.setSigner(signer)
-            init()
+            init(signer)
         })
 
         btnConnect.addEventListener('click', async () => {
@@ -164,23 +165,17 @@
             try {
                 // 请求用户连接 MetaMask
                 const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' })
-
-
                 // 创建 ethers provider 和 signer
                 const provider = new ethers.BrowserProvider(window.ethereum)
                 const signer = await provider.getSigner()
-
-                // 设置签名器
-                dotClient.setSigner(signer)
-
-                const address = accounts[0]
+                const address = await signer.getAddress()
                 const sig = await signer.signMessage(address)
-
                 const wallet = Dot.mostWallet(address, sig)
                 public_key = wallet.public_key
                 private_key = wallet.private_key
                 userAddress = address
-                init()
+                addressDisplay.textContent = `当前地址: ${address}`
+                init(signer)
             } catch (error) {
                 console.error('连接钱包失败:', error)
                 alert('连接钱包失败')

@@ -218,7 +218,7 @@ export class DotServer {
             }
             this.data.set(key, entry)
             this.hasChanges = true
-            this.saveData()
+            // this.saveData()
             return true
         } catch (err) {
             console.error('dot: 签名验证失败:', err)

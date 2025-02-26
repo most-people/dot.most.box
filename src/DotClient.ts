@@ -23,6 +23,7 @@ export interface DotMethods {
     on: (key: string, callback: (value: any) => void, options?: { once?: boolean }) => DotClient
     once: (key: string, callback: (value: any) => void) => DotClient
     off: (key: string, callback?: (value: any) => void) => DotClient
+    setSigner: (signer: any) => void  // 专门为此地址设置签名器
 }
 
 export class DotClient {
@@ -32,7 +33,8 @@ export class DotClient {
     private messageQueue: Message[]
     private isConnected: boolean
     private WebSocketImpl: typeof WebSocket
-    private signer: any | null = null
+    // 使用 Map 存储每个地址对应的签名器
+    private signers: Map<string, any> = new Map()
 
     constructor(url: string) {
         this.url = url
@@ -55,12 +57,18 @@ export class DotClient {
         this.connect()
     }
 
-    // 设置签名器
-    setSigner(signer: any) {
-        this.signer = signer
+    // 为特定地址设置签名器
+    setAddressSigner(address: string, signer: any) {
+        this.signers.set(address.toLowerCase(), signer)
     }
 
-    // 简化的用户方法，不做地址校验
+    // 获取地址对应的签名器
+    private getSignerForAddress(address: string): any {
+        // 查找地址特定的签名器
+        return this.signers.get(address.toLowerCase())
+    }
+
+    // 修改 dot 方法，返回增强的 DotMethods
     dot(address: string): DotMethods {
         return {
             get: (key: string) => this.get(`${address}/${key}`),
@@ -71,6 +79,8 @@ export class DotClient {
                 this.once(`${address}/${key}`, callback),
             off: (key: string, callback?: (value: any) => void) =>
                 this.off(`${address}/${key}`, callback),
+            // 添加为该地址设置专属签名器的方法
+            setSigner: (signer: any) => this.setAddressSigner(address, signer)
         }
     }
 
@@ -171,8 +181,13 @@ export class DotClient {
     }
 
     async put(key: string, value: any): Promise<void> {
-        if (!this.signer) {
-            throw new Error('需要设置签名器才能执行 put 操作')
+        // 从 key 中提取地址
+        const address = key.split('/')[0]
+        // 获取对应地址的 signer
+        const signer = this.getSignerForAddress(address)
+
+        if (!signer) {
+            throw new Error(`没有为地址 ${address} 设置签名器，无法执行 put 操作`)
         }
 
         try {
@@ -186,7 +201,7 @@ export class DotClient {
 
             // 对完整消息进行签名
             const message = JSON.stringify(messageObject)
-            const sig = await this.signer.signMessage(message)
+            const sig = await signer.signMessage(message)
 
             this.sendMessage({
                 type: 'put',
