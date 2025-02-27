@@ -13,9 +13,17 @@ interface WebSocketLike {
 
 // 定义监听器接口
 interface Listener {
-    callback: (value: any) => void
+    callback: (value: any, timestamp: number) => void
     once: boolean
-    decrypt: boolean // 新增是否解密的标志
+    decrypt: boolean // 是否解密的标志
+}
+
+// 定义节点接口
+interface Node {
+    url: string
+    ws: WebSocketLike | null
+    isConnected: boolean
+    messageQueue: Message[]
 }
 
 // 定义 DotClient 的方法接口
@@ -23,7 +31,7 @@ export interface DotMethods {
     put: (key: string, value: any, encrypt?: boolean) => Promise<void>
     on: (
         key: string,
-        callback: (value: any) => void,
+        callback: (value: any, timestamp: number) => void,
         options?: { once?: boolean; decrypt?: boolean },
     ) => DotClient
     once: (key: string, callback: (value: any) => void, decrypt?: boolean) => DotClient
@@ -34,11 +42,8 @@ export interface DotMethods {
 }
 
 export class DotClient {
-    private url: string
-    private ws!: WebSocketLike
+    private nodes: Node[] = []
     private listeners: Map<string, Set<Listener>>
-    private messageQueue: Message[]
-    private isConnected: boolean
     private WebSocketImpl: typeof WebSocket
     // 使用 Map 存储每个地址对应的签名器
     private signers: Map<string, any> = new Map()
@@ -46,11 +51,8 @@ export class DotClient {
     private publicKeys: Map<string, string> = new Map()
     private privateKeys: Map<string, string> = new Map()
 
-    constructor(url: string) {
-        this.url = url
+    constructor(urls: string[]) {
         this.listeners = new Map()
-        this.messageQueue = []
-        this.isConnected = false
 
         // 根据环境选择 WebSocket 实现
         if (typeof window !== 'undefined' && window.WebSocket) {
@@ -64,7 +66,22 @@ export class DotClient {
             }
         }
 
-        this.connect()
+        // 初始化所有节点
+        for (const url of urls) {
+            this.addNode(url)
+        }
+    }
+
+    // 添加新节点
+    public addNode(url: string): void {
+        const node: Node = {
+            url,
+            ws: null,
+            isConnected: false,
+            messageQueue: [],
+        }
+        this.nodes.push(node)
+        this.connectNode(node)
     }
 
     // 为指定地址设置签名器
@@ -104,12 +121,15 @@ export class DotClient {
                 this.put(`${address}/${key}`, value, encrypt),
             on: (
                 key: string,
-                callback: (value: any) => void,
+                callback: (value: any, timestamp: number) => void,
                 options?: { once?: boolean; decrypt?: boolean },
             ) => this.on(`${address}/${key}`, callback, options),
-            once: (key: string, callback: (value: any) => void, decrypt: boolean = false) =>
-                this.once(`${address}/${key}`, callback, decrypt),
-            off: (key: string, callback?: (value: any) => void) =>
+            once: (
+                key: string,
+                callback: (value: any, timestamp: number) => void,
+                decrypt: boolean = false,
+            ) => this.once(`${address}/${key}`, callback, decrypt),
+            off: (key: string, callback?: (value: any, timestamp: number) => void) =>
                 this.off(`${address}/${key}`, callback),
             // 添加为该地址设置专属签名器的方法
             setSigner: (signer: any) => this.setAddressSigner(address, signer),
@@ -119,18 +139,18 @@ export class DotClient {
         }
     }
 
-    private connect(): void {
+    private connectNode(node: Node): void {
         try {
             // 使用选择的 WebSocket 实现创建连接
-            this.ws = new this.WebSocketImpl(this.url.replace(/^http/, 'ws')) as WebSocketLike
+            node.ws = new this.WebSocketImpl(node.url.replace(/^http/, 'ws')) as WebSocketLike
 
-            this.ws.onopen = () => {
-                console.log('已连接到服务器')
-                this.isConnected = true
-                this.flushMessageQueue()
+            node.ws.onopen = () => {
+                console.log(`已连接到节点: ${node.url}`)
+                node.isConnected = true
+                this.flushNodeMessageQueue(node)
             }
 
-            this.ws.onmessage = (event: MessageEvent) => {
+            node.ws.onmessage = (event: MessageEvent) => {
                 try {
                     const msg = JSON.parse(event.data) as Message
                     this.handleMessage(msg)
@@ -139,17 +159,17 @@ export class DotClient {
                 }
             }
 
-            this.ws.onclose = () => {
-                console.log('与服务器断开连接')
-                this.isConnected = false
-                setTimeout(() => this.connect(), 1000)
+            node.ws.onclose = () => {
+                console.log(`与节点断开连接: ${node.url}`)
+                node.isConnected = false
+                setTimeout(() => this.connectNode(node), 1000)
             }
 
-            this.ws.onerror = (error: Event) => {
-                console.error('WebSocket 错误:', error)
+            node.ws.onerror = (error: Event) => {
+                console.error(`WebSocket 错误 (${node.url}):`, error)
             }
         } catch (err) {
-            console.error('连接错误:', err)
+            console.error(`连接错误 (${node.url}):`, err)
         }
     }
 
@@ -190,8 +210,7 @@ export class DotClient {
                                 console.error('解密消息时出错:', err)
                             }
                         }
-
-                        callback(value)
+                        callback(value, msg.timestamp || 0)
                         if (once) {
                             this.off(msg.key, callback)
                         }
@@ -210,23 +229,33 @@ export class DotClient {
     }
 
     private sendMessage(message: Message): void {
-        if (this.isConnected) {
-            try {
-                this.ws.send(JSON.stringify(message))
-            } catch (err) {
-                console.error('发送消息时出错:', err)
-                this.messageQueue.push(message)
+        // 尝试向所有已连接的节点发送消息
+        for (const node of this.nodes) {
+            if (node.isConnected && node.ws) {
+                try {
+                    node.ws.send(JSON.stringify(message))
+                } catch (err) {
+                    console.error(`发送消息到节点 ${node.url} 时出错:`, err)
+                    node.messageQueue.push(message)
+                }
+            } else {
+                node.messageQueue.push(message)
             }
-        } else {
-            this.messageQueue.push(message)
         }
     }
 
-    private flushMessageQueue(): void {
-        while (this.messageQueue.length > 0) {
-            const message = this.messageQueue.shift()
-            if (message) {
-                this.sendMessage(message)
+    private flushNodeMessageQueue(node: Node): void {
+        while (node.messageQueue.length > 0) {
+            const message = node.messageQueue.shift()
+            if (message && node.ws && node.isConnected) {
+                try {
+                    node.ws.send(JSON.stringify(message))
+                } catch (err) {
+                    console.error(`发送排队消息到节点 ${node.url} 时出错:`, err)
+                    // 放回队列前面
+                    node.messageQueue.unshift(message)
+                    break
+                }
             }
         }
     }
@@ -283,7 +312,7 @@ export class DotClient {
 
     on(
         key: string,
-        callback: (value: any) => void,
+        callback: (value: any, timestamp: number) => void,
         { once = false, decrypt = false }: { once?: boolean; decrypt?: boolean } = {},
     ): DotClient {
         if (!this.listeners.has(key)) {
@@ -303,11 +332,15 @@ export class DotClient {
         return this
     }
 
-    once(key: string, callback: (value: any) => void, decrypt: boolean = false): DotClient {
+    once(
+        key: string,
+        callback: (value: any, timestamp: number) => void,
+        decrypt: boolean = false,
+    ): DotClient {
         return this.on(key, callback, { once: true, decrypt })
     }
 
-    off(key: string, callback?: (value: any) => void): DotClient {
+    off(key: string, callback?: (value: any, timestamp: number) => void): DotClient {
         if (!callback) {
             this.listeners.delete(key)
             return this

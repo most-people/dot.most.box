@@ -115,7 +115,8 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tweetnacl/1.0.2/nacl-fast.min.js"></script>
     <script src="/dist/index.js"></script>
     <script>
-        const dotClient = new Dot.DotClient('http://localhost:1976')
+        const { DotClient, mostWallet } = Dot
+        const dotClient = new DotClient(['http://localhost:1976'])
         let userAddress = ''
 
         const init = (signer) => {
@@ -126,10 +127,13 @@
             dot.setSigner(signer)
 
             // 监听用户数据变化 - 现在自动处理解密
-            dot.on('profile', (profile) => {
-                console.log('用户数据更新:', profile)
-                if (profile && profile.name) {
-                    inputName.value = profile.name
+            let t = 0
+            dot.on('profile', (profile, timestamp) => {
+                if (timestamp > t) {
+                    t = timestamp
+                    if (profile && profile.name) {
+                        inputName.value = profile.name
+                    }
                 }
             }, { decrypt: true }) // 使用 decrypt 选项自动解密
 
@@ -140,7 +144,7 @@
 
         btnLogin.addEventListener('click', async () => {
             // 初始化钱包
-            const wallet = Dot.mostWallet(inputUsername.value, inputPassword.value, 'I know loss mnemonic will lose my wallet.')
+            const wallet = mostWallet(inputUsername.value, inputPassword.value, 'I know loss mnemonic will lose my wallet.')
             userAddress = wallet.address
             addressDisplay.textContent = `当前地址: ${userAddress}`
 

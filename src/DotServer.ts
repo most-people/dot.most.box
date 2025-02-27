@@ -141,12 +141,13 @@ export class DotServer {
             case 'get':
                 try {
                     if (msg.key) {
-                        const value = this.getData(msg.key)
+                        const data = this.data.get(msg.key)
                         sender.send(
                             JSON.stringify({
                                 type: 'get_response',
                                 key: msg.key,
-                                value,
+                                value: data?.value || null,
+                                timestamp: data?.timestamp || null,
                             } as Message),
                         )
                     }
@@ -225,11 +226,6 @@ export class DotServer {
             console.error('dot: 签名验证失败:', err)
             return false
         }
-    }
-
-    private getData(key: string): any | null {
-        const entry = this.data.get(key)
-        return entry ? entry.value : null
     }
 
     private saveData(): void {
