@@ -1,6 +1,7 @@
-import WebSocket from 'ws'
+import os from 'os'
 import fs from 'fs'
 import path from 'path'
+import WebSocket from 'ws'
 import { Server } from 'http'
 import { isAddress, verifyMessage } from 'ethers'
 
@@ -29,7 +30,7 @@ export class DotServer {
     constructor(httpServer: Server) {
         this.peers = new Set()
         this.data = new Map()
-        this.dataFile = path.join(process.cwd(), 'dot-data.json')
+        this.dataFile = path.join(os.homedir(), 'dot-data.json') // 文件目录 ~/dot-data.json
         this.loadData()
 
         // 定期保存数据
