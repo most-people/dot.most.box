@@ -1,7 +1,7 @@
 {
   "name": "dot.most.box",
-  "version": "0.1.7",
-  "description": "Dot 去中心化节点",
+  "version": "0.1.8",
+  "description": "Pale Blue Dot",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "exports": {
@@ -28,6 +28,20 @@
     "pre-publish": "rm -rf dist && rm -rf node_modules && pnpm i && npm run build",
     "pnpm": "pnpm i"
   },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/most-people/dot.most.box.git"
+  },
+  "keywords": [
+    "Fully DApp",
+    "web3"
+  ],
+  "author": "most.box",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/most-people/dot.most.box/issues"
+  },
+  "homepage": "https://github.com/most-people/dot.most.box#readme",
   "dependencies": {
     "ethers": "^6.13.5",
     "tweetnacl": "^1.0.3",
