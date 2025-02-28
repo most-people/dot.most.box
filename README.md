@@ -37,7 +37,31 @@ https://most.box#dot.most.box
 npm install dot.most.box
 ```
 
-### 浏览器直接引入
+## 快速开始
+
+## 服务端 Http | Express | Nest.js | Koa2 | Fastify...
+
+```js
+import DotServer from 'dot.most.box/server'
+import http from 'http'
+
+const server = http.createServer()
+new DotServer(server)
+server.listen(1976, () => console.log('Server running on port 1976'))
+```
+
+[其他后端框架示例](SERVER.md)
+
+## 客户端 React | Vue | React Native...
+
+```js
+import Dot from 'dot.most.box'
+
+const { DotClient } = Dot
+const dotClient = new DotClient(['http://localhost:1976'])
+```
+
+## 浏览器直接引入
 
 您也可以通过 CDN 或者直接在 HTML 中引入脚本文件的方式使用:
 
@@ -53,28 +77,6 @@ npm install dot.most.box
     // 全局变量 Dot 可用
     const { DotClient, mostWallet } = Dot
 </script>
-```
-
-## 快速开始
-
-### 服务端
-
-```js
-import DotServer from 'dot.most.box/server'
-import http from 'http'
-
-const server = http.createServer()
-new DotServer(server)
-server.listen(1976)
-```
-
-### 客户端
-
-```js
-import Dot from 'dot.most.box'
-
-const { DotClient } = Dot
-const client = new DotClient(['http://localhost:1976'])
 ```
 
 ## 认证与加密
