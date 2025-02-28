@@ -1,6 +1,6 @@
 {
   "name": "dot.most.box",
-  "version": "0.1.8",
+  "version": "0.1.9",
   "description": "Pale Blue Dot",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -33,8 +33,7 @@
     "url": "git+https://github.com/most-people/dot.most.box.git"
   },
   "keywords": [
-    "Fully DApp",
-    "web3"
+    "Fully DApp"
   ],
   "author": "most.box",
   "license": "MIT",

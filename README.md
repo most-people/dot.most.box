@@ -3,7 +3,7 @@
 基于去中心化节点的实时数据同步工具
 
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/version-0.1.7-green.svg)](https://github.com/most-people/dot.most.box/releases)
+[![Version](https://img.shields.io/badge/version-0.1.9-green.svg)](https://github.com/most-people/dot.most.box/releases)
 [![GitHub stars](https://img.shields.io/github/stars/most-people/dot.most.box.svg?style=social&label=Stars)](https://github.com/most-people/dot.most.box)
 [![GitHub forks](https://img.shields.io/github/forks/most-people/dot.most.box.svg?style=social&label=Fork)](https://github.com/most-people/dot.most.box)
 
@@ -60,10 +60,9 @@ npm install dot.most.box
 ### 服务端
 
 ```js
-import Dot from 'dot.most.box'
+import DotServer from 'dot.most.box/server'
 import http from 'http'
 
-const { DotServer } = Dot
 const server = http.createServer()
 new DotServer(server)
 server.listen(1976)
@@ -87,16 +86,16 @@ dot.most.box 提供两种用户认证方式：
 ```js
 // 初始化钱包
 const wallet = Dot.mostWallet('username', 'password', 'I know loss mnemonic will lose my wallet.')
-const userAddress = wallet.address
-
-// 设置加密所需的密钥
-const dot = client.dot(userAddress)
-dot.setPubKey(wallet.public_key)
-dot.setPrivKey(wallet.private_key)
+const address = wallet.address
 
 // 设置签名器
 const signer = ethers.HDNodeWallet.fromPhrase(wallet.mnemonic)
 dot.setSigner(signer)
+
+// 设置加密所需的密钥
+const dot = client.dot(address)
+dot.setPubKey(wallet.public_key)
+dot.setPrivKey(wallet.private_key)
 ```
 
 ### 2. 钱包插件认证
@@ -110,13 +109,13 @@ const address = await signer.getAddress()
 const sig = await signer.signMessage(address)
 const wallet = Dot.mostWallet(address, sig)
 
+// 设置签名器
+dot.setSigner(signer)
+
 // 设置加密所需的密钥
 const dot = client.dot(address)
 dot.setPubKey(wallet.public_key)
 dot.setPrivKey(wallet.private_key)
-
-// 设置签名器
-dot.setSigner(signer)
 ```
 
 ## 数据读写
