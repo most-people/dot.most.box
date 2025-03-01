@@ -3,7 +3,7 @@
 基于去中心化节点的实时数据同步工具
 
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/version-0.1.9-green.svg)](https://github.com/most-people/dot.most.box/releases)
+[![Version](https://img.shields.io/badge/version-0.2.2-green.svg)](https://github.com/most-people/dot.most.box/releases)
 [![GitHub stars](https://img.shields.io/github/stars/most-people/dot.most.box.svg?style=social&label=Stars)](https://github.com/most-people/dot.most.box)
 [![GitHub forks](https://img.shields.io/github/forks/most-people/dot.most.box.svg?style=social&label=Fork)](https://github.com/most-people/dot.most.box)
 
@@ -172,7 +172,7 @@ dot.once('profile', (profile) => {
 dot.most.box 是构建完全去中心化应用的关键组件。一个完整的去中心化应用架构可以包括：
 
 -   **用户身份**：加密钱包（如 MetaMask, OKX 钱包等）
--   **域名**：去中心化域名（.box, .eth 等）
+-   **域名**：去中心化域名（.box）
 -   **前端**：IPFS（通过 Fleek 等服务部署）
 -   **数据存储**：dot.most.box
 -   **紧急恢复**：以太坊智能合约
@@ -196,7 +196,7 @@ npm start
 默认情况下，节点将在端口 1976 上运行。您可以通过参数更改端口：
 
 ```bash
-npm start --port=3000
+node server.mjs --port=3000
 ```
 
 ## 贡献
