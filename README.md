@@ -149,7 +149,6 @@ dot.put(
 // 监听用户数据变化
 dot.on('profile', (profile, timestamp) => {
     console.log('收到数据:', profile)
-    console.log('数据时间戳:', timestamp)
 })
 
 // 自动解密监听
@@ -162,8 +161,19 @@ dot.on(
 ) // 使用 decrypt 选项自动解密
 
 // 只获取一次数据
-dot.once('profile', (profile) => {
+dot.once('profile', (profile, timestamp) => {
     console.log('收到一次性数据:', profile)
+})
+
+// 监听用户数据变化（多节点） ——写入时，会自动更新所有节点
+let t = 0
+dot.on('profile', (profile, timestamp) => {
+    // 只获取最新的数据
+    if (timestamp > t) {
+        t = timestamp
+        console.log('收到数据:', profile)
+        console.log('数据时间戳:', timestamp)
+    }
 })
 ```
 
@@ -191,6 +201,9 @@ npm install
 
 # 启动节点
 npm start
+
+# 后台运行 pm2
+pm2 start server.mjs --name dot.most.box
 ```
 
 默认情况下，节点将在端口 1976 上运行。您可以通过参数更改端口：
