@@ -116,7 +116,7 @@
     <script src="/dist/index.js"></script>
     <script>
         const { DotClient, mostWallet } = Dot
-        const dotClient = new DotClient(['http://localhost:1976'])
+        const dotClient = new DotClient([location.origin])
         let userAddress = ''
 
         const init = (signer) => {

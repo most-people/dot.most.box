@@ -162,7 +162,7 @@ export class DotClient {
             node.ws.onclose = () => {
                 console.log(`与节点断开连接: ${node.url}`)
                 node.isConnected = false
-                setTimeout(() => this.connectNode(node), 1000)
+                // setTimeout(() => this.connectNode(node), 1000)
             }
 
             node.ws.onerror = (error: Event) => {
