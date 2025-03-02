@@ -151,7 +151,6 @@
             return {
                 put: (key, value, encrypt = false) => this.put(`${address}/${key}`, value, encrypt),
                 on: (key, callback, options) => this.on(`${address}/${key}`, callback, options),
-                once: (key, callback, decrypt = false) => this.once(`${address}/${key}`, callback, decrypt),
                 off: (key, callback) => this.off(`${address}/${key}`, callback),
                 // 添加为该地址设置专属签名器的方法
                 setSigner: (signer) => this.setAddressSigner(address, signer),
@@ -197,11 +196,10 @@
                 case 'sync':
                     const listeners = this.listeners.get(msg.key);
                     if (listeners) {
-                        const listenersArray = Array.from(listeners);
-                        for (const { callback, once, decrypt } of listenersArray) {
+                        for (const listener of listeners) {
                             let value = msg.value;
                             // 如果需要解密数据
-                            if (decrypt &&
+                            if (listener.decrypt &&
                                 value &&
                                 typeof value === 'string' &&
                                 value.startsWith('mp://2')) {
@@ -226,10 +224,8 @@
                                     console.error('解密消息时出错:', err);
                                 }
                             }
-                            callback(value, msg.timestamp || 0);
-                            if (once) {
-                                this.off(msg.key, callback);
-                            }
+                            // 调用回调，传递解密后的值和时间戳
+                            listener.callback(value, msg.timestamp || 0);
                         }
                     }
                     break;
@@ -319,22 +315,19 @@
                 }
             });
         }
-        on(key, callback, { once = false, decrypt = false } = {}) {
+        on(key, callback, { decrypt = false } = {}) {
             if (!this.listeners.has(key)) {
                 this.listeners.set(key, new Set());
             }
             const listeners = this.listeners.get(key);
             if (listeners) {
-                listeners.add({ callback, once, decrypt });
+                listeners.add({ callback, decrypt });
             }
             this.sendMessage({
                 type: 'get',
                 key,
             });
             return this;
-        }
-        once(key, callback, decrypt = false) {
-            return this.on(key, callback, { once: true, decrypt });
         }
         off(key, callback) {
             if (!callback) {

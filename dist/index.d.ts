@@ -12,10 +12,8 @@ declare const mostDecode: (data: string, public_key: string, private_key: string
 interface DotMethods {
     put: (key: string, value: any, encrypt?: boolean) => Promise<void>;
     on: (key: string, callback: (value: any, timestamp: number) => void, options?: {
-        once?: boolean;
         decrypt?: boolean;
     }) => DotClient;
-    once: (key: string, callback: (value: any) => void, decrypt?: boolean) => DotClient;
     off: (key: string, callback?: (value: any) => void) => DotClient;
     setSigner: (signer: any) => void;
     setPubKey: (publicKey: string) => void;
@@ -42,11 +40,9 @@ declare class DotClient {
     private sendMessage;
     private flushNodeMessageQueue;
     put(key: string, value: any, encrypt?: boolean): Promise<void>;
-    on(key: string, callback: (value: any, timestamp: number) => void, { once, decrypt }?: {
-        once?: boolean;
+    on(key: string, callback: (value: any, timestamp: number) => void, { decrypt }?: {
         decrypt?: boolean;
     }): DotClient;
-    once(key: string, callback: (value: any, timestamp: number) => void, decrypt?: boolean): DotClient;
     off(key: string, callback?: (value: any, timestamp: number) => void): DotClient;
 }
 

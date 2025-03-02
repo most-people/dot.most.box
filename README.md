@@ -160,11 +160,6 @@ dot.on(
     { decrypt: true },
 ) // 使用 decrypt 选项自动解密
 
-// 只获取一次数据
-dot.once('profile', (profile, timestamp) => {
-    console.log('收到一次性数据:', profile)
-})
-
 // 监听用户数据变化（多节点） ——写入时，会自动更新所有节点
 let t = 0
 dot.on('profile', (profile, timestamp) => {
@@ -175,6 +170,9 @@ dot.on('profile', (profile, timestamp) => {
         console.log('数据时间戳:', timestamp)
     }
 })
+
+// 移除监听
+dot.off('profile')
 ```
 
 ## 完整的去中心化应用架构

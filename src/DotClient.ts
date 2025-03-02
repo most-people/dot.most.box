@@ -14,7 +14,6 @@ interface WebSocketLike {
 // 定义监听器接口
 interface Listener {
     callback: (value: any, timestamp: number) => void
-    once: boolean
     decrypt: boolean // 是否解密的标志
 }
 
@@ -32,9 +31,8 @@ export interface DotMethods {
     on: (
         key: string,
         callback: (value: any, timestamp: number) => void,
-        options?: { once?: boolean; decrypt?: boolean },
+        options?: { decrypt?: boolean },
     ) => DotClient
-    once: (key: string, callback: (value: any) => void, decrypt?: boolean) => DotClient
     off: (key: string, callback?: (value: any) => void) => DotClient
     setSigner: (signer: any) => void // 设置签名器
     setPubKey: (publicKey: string) => void // 设置公钥
@@ -122,13 +120,8 @@ export class DotClient {
             on: (
                 key: string,
                 callback: (value: any, timestamp: number) => void,
-                options?: { once?: boolean; decrypt?: boolean },
+                options?: { decrypt?: boolean },
             ) => this.on(`${address}/${key}`, callback, options),
-            once: (
-                key: string,
-                callback: (value: any, timestamp: number) => void,
-                decrypt: boolean = false,
-            ) => this.once(`${address}/${key}`, callback, decrypt),
             off: (key: string, callback?: (value: any, timestamp: number) => void) =>
                 this.off(`${address}/${key}`, callback),
             // 添加为该地址设置专属签名器的方法
@@ -179,13 +172,12 @@ export class DotClient {
             case 'sync':
                 const listeners = this.listeners.get(msg.key)
                 if (listeners) {
-                    const listenersArray = Array.from(listeners)
-                    for (const { callback, once, decrypt } of listenersArray) {
+                    for (const listener of listeners) {
                         let value = msg.value
 
                         // 如果需要解密数据
                         if (
-                            decrypt &&
+                            listener.decrypt &&
                             value &&
                             typeof value === 'string' &&
                             value.startsWith('mp://2')
@@ -210,10 +202,9 @@ export class DotClient {
                                 console.error('解密消息时出错:', err)
                             }
                         }
-                        callback(value, msg.timestamp || 0)
-                        if (once) {
-                            this.off(msg.key, callback)
-                        }
+
+                        // 调用回调，传递解密后的值和时间戳
+                        listener.callback(value, msg.timestamp || 0)
                     }
                 }
                 break
@@ -313,7 +304,7 @@ export class DotClient {
     on(
         key: string,
         callback: (value: any, timestamp: number) => void,
-        { once = false, decrypt = false }: { once?: boolean; decrypt?: boolean } = {},
+        { decrypt = false }: { decrypt?: boolean } = {},
     ): DotClient {
         if (!this.listeners.has(key)) {
             this.listeners.set(key, new Set())
@@ -321,7 +312,7 @@ export class DotClient {
 
         const listeners = this.listeners.get(key)
         if (listeners) {
-            listeners.add({ callback, once, decrypt })
+            listeners.add({ callback, decrypt })
         }
 
         this.sendMessage({
@@ -330,14 +321,6 @@ export class DotClient {
         })
 
         return this
-    }
-
-    once(
-        key: string,
-        callback: (value: any, timestamp: number) => void,
-        decrypt: boolean = false,
-    ): DotClient {
-        return this.on(key, callback, { once: true, decrypt })
     }
 
     off(key: string, callback?: (value: any, timestamp: number) => void): DotClient {
