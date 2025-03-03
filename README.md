@@ -210,6 +210,39 @@ pm2 start server.mjs --name dot.most.box
 node server.mjs --port=3000
 ```
 
+## 配置 Nginx
+
+```nginx
+# dot.most.box
+# HTTPS 服务器
+server {
+    listen 443 ssl http2;
+    server_name dot.most.box;
+
+    ssl_certificate conf.d/most.box.pem;
+    ssl_certificate_key conf.d/most.box.key;
+
+    ssl_protocols TLSv1.2 TLSv1.3;
+    ssl_ciphers 'ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384';
+
+    location / {
+        proxy_pass http://127.0.0.1:1976/;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+    }
+}
+
+# HTTP 跳转 HTTPS
+server {
+    listen 80;
+    server_name dot.most.box;
+    return 301 https://$server_name$request_uri;
+}
+```
+
 ## 贡献
 
 欢迎参与项目贡献！您可以通过以下方式参与：
