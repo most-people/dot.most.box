@@ -155,7 +155,7 @@ export class DotClient {
             node.ws.onclose = () => {
                 console.log(`与节点断开连接: ${node.url}`)
                 node.isConnected = false
-                // setTimeout(() => this.connectNode(node), 1000)
+                // setTimeout(() => this.connectNode(node), 5000)
             }
 
             node.ws.onerror = (error: Event) => {
@@ -315,8 +315,15 @@ export class DotClient {
             listeners.add({ callback, decrypt })
         }
 
+        // 发送 get 请求获取数据
         this.sendMessage({
             type: 'get',
+            key,
+        })
+
+        // 显式发送订阅请求
+        this.sendMessage({
+            type: 'subscribe',
             key,
         })
 
@@ -326,6 +333,13 @@ export class DotClient {
     off(key: string, callback?: (value: any, timestamp: number) => void): DotClient {
         if (!callback) {
             this.listeners.delete(key)
+
+            // 取消订阅该键
+            this.sendMessage({
+                type: 'unsubscribe',
+                key,
+            })
+
             return this
         }
 
@@ -337,8 +351,14 @@ export class DotClient {
                     break
                 }
             }
+
             if (listeners.size === 0) {
                 this.listeners.delete(key)
+
+                this.sendMessage({
+                    type: 'unsubscribe',
+                    key,
+                })
             }
         }
 

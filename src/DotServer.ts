@@ -12,7 +12,7 @@ export interface DotData {
 }
 
 export interface Message {
-    type: 'put' | 'get' | 'sync' | 'get_response' | 'ack' | 'error'
+    type: 'put' | 'get' | 'sync' | 'get_response' | 'ack' | 'error' | 'subscribe' | 'unsubscribe'
     key: string
     value?: any
     sig?: string
@@ -26,6 +26,8 @@ export class DotServer {
     private dataFile: string
     private server: WebSocket.Server
     private hasChanges: boolean = false
+    // 新增：跟踪客户端订阅
+    private subscriptions: Map<WebSocket, Set<string>> = new Map()
 
     constructor(httpServer: Server) {
         this.peers = new Set()
@@ -46,6 +48,8 @@ export class DotServer {
         this.server.on('connection', (socket: WebSocket) => {
             console.log('dot: 新客户端已连接')
             this.peers.add(socket)
+            // 初始化该客户端的订阅集合
+            this.subscriptions.set(socket, new Set())
 
             socket.on('message', (message: WebSocket.Data) => {
                 try {
@@ -59,6 +63,8 @@ export class DotServer {
             socket.on('close', () => {
                 console.log('dot: 客户端断开连接')
                 this.peers.delete(socket)
+                // 移除该客户端的订阅信息
+                this.subscriptions.delete(socket)
             })
 
             socket.on('error', (error: Error) => {
@@ -99,7 +105,7 @@ export class DotServer {
                                     } as Message),
                                 )
 
-                                // 广播同步消息给所有客户端
+                                // 广播同步消息给订阅了这个键的客户端
                                 this.broadcast(
                                     {
                                         type: 'sync',
@@ -108,7 +114,7 @@ export class DotServer {
                                         sig: msg.sig,
                                         timestamp: msg.timestamp,
                                     },
-                                    null,
+                                    sender,
                                 )
                             } else {
                                 sender.send(
@@ -141,6 +147,13 @@ export class DotServer {
             case 'get':
                 try {
                     if (msg.key) {
+                        // 当客户端请求数据时，自动订阅该键
+                        const subs = this.subscriptions.get(sender)
+                        if (subs) {
+                            subs.add(msg.key)
+                            console.log(`dot: 客户端通过 get 订阅了 ${msg.key}`)
+                        }
+
                         const data = this.data.get(msg.key)
                         sender.send(
                             JSON.stringify({
@@ -175,6 +188,44 @@ export class DotServer {
                     }
                 } catch (err) {
                     console.error('dot: sync 操作出错:', err)
+                }
+                break
+
+            // 新增：处理订阅请求
+            case 'subscribe':
+                if (msg.key) {
+                    const subs = this.subscriptions.get(sender)
+                    if (subs) {
+                        subs.add(msg.key)
+                        console.log(`dot: 客户端显式订阅了 ${msg.key}`)
+                    }
+                    // 发送订阅确认
+                    sender.send(
+                        JSON.stringify({
+                            type: 'ack',
+                            key: msg.key,
+                            message: 'Subscription confirmed',
+                        } as Message),
+                    )
+                }
+                break
+
+            // 新增：处理取消订阅请求
+            case 'unsubscribe':
+                if (msg.key) {
+                    const subs = this.subscriptions.get(sender)
+                    if (subs) {
+                        subs.delete(msg.key)
+                        console.log(`dot: 客户端取消订阅了 ${msg.key}`)
+                    }
+                    // 发送取消订阅确认
+                    sender.send(
+                        JSON.stringify({
+                            type: 'ack',
+                            key: msg.key,
+                            message: 'Unsubscription confirmed',
+                        } as Message),
+                    )
                 }
                 break
         }
@@ -259,14 +310,22 @@ export class DotServer {
         }
     }
 
+    // 修改广播方法，只向订阅了指定键的客户端发送消息
     private broadcast(message: Message, exclude: WebSocket | null): void {
+        if (!message.key) return
+
         const msg = JSON.stringify(message)
+
         this.peers.forEach((peer) => {
-            if ((!exclude || peer !== exclude) && peer.readyState === WebSocket.OPEN) {
-                try {
-                    peer.send(msg)
-                } catch (err) {
-                    console.error('dot: 广播消息出错:', err)
+            if (peer !== exclude && peer.readyState === WebSocket.OPEN) {
+                // 检查该客户端是否订阅了这个键
+                const subs = this.subscriptions.get(peer)
+                if (subs && subs.has(message.key)) {
+                    try {
+                        peer.send(msg)
+                    } catch (err) {
+                        console.error('dot: 广播消息出错:', err)
+                    }
                 }
             }
         })
