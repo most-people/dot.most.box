@@ -155,6 +155,7 @@ export class DotClient {
             node.ws.onclose = () => {
                 console.log(`与节点断开连接: ${node.url}`)
                 node.isConnected = false
+                // 在5秒后尝试重新连接
                 // setTimeout(() => this.connectNode(node), 5000)
             }
 
@@ -315,15 +316,9 @@ export class DotClient {
             listeners.add({ callback, decrypt })
         }
 
-        // 发送 get 请求获取数据
+        // 发送 get 请求获取数据，同时在服务器端自动完成订阅
         this.sendMessage({
             type: 'get',
-            key,
-        })
-
-        // 显式发送订阅请求
-        this.sendMessage({
-            type: 'subscribe',
             key,
         })
 
@@ -354,7 +349,6 @@ export class DotClient {
 
             if (listeners.size === 0) {
                 this.listeners.delete(key)
-
                 this.sendMessage({
                     type: 'unsubscribe',
                     key,

@@ -12,7 +12,7 @@ export interface DotData {
 }
 
 export interface Message {
-    type: 'put' | 'get' | 'sync' | 'get_response' | 'ack' | 'error' | 'subscribe' | 'unsubscribe'
+    type: 'put' | 'get' | 'sync' | 'get_response' | 'ack' | 'error' | 'unsubscribe'
     key: string
     value?: any
     sig?: string
@@ -26,7 +26,7 @@ export class DotServer {
     private dataFile: string
     private server: WebSocket.Server
     private hasChanges: boolean = false
-    // 新增：跟踪客户端订阅
+    // 跟踪客户端订阅
     private subscriptions: Map<WebSocket, Set<string>> = new Map()
 
     constructor(httpServer: Server) {
@@ -151,7 +151,7 @@ export class DotServer {
                         const subs = this.subscriptions.get(sender)
                         if (subs) {
                             subs.add(msg.key)
-                            console.log(`dot: 客户端通过 get 订阅了 ${msg.key}`)
+                            console.log(`dot: 客户端订阅了 ${msg.key}`)
                         }
 
                         const data = this.data.get(msg.key)
@@ -190,26 +190,6 @@ export class DotServer {
                     console.error('dot: sync 操作出错:', err)
                 }
                 break
-
-            // 新增：处理订阅请求
-            case 'subscribe':
-                if (msg.key) {
-                    const subs = this.subscriptions.get(sender)
-                    if (subs) {
-                        subs.add(msg.key)
-                        console.log(`dot: 客户端显式订阅了 ${msg.key}`)
-                    }
-                    // 发送订阅确认
-                    sender.send(
-                        JSON.stringify({
-                            type: 'ack',
-                            key: msg.key,
-                            message: 'Subscription confirmed',
-                        } as Message),
-                    )
-                }
-                break
-
             // 新增：处理取消订阅请求
             case 'unsubscribe':
                 if (msg.key) {
@@ -271,7 +251,6 @@ export class DotServer {
             }
             this.data.set(key, entry)
             this.hasChanges = true
-            // this.saveData()
             return true
         } catch (err) {
             console.error('dot: 签名验证失败:', err)
