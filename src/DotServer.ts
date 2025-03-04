@@ -190,7 +190,8 @@ export class DotServer {
                     console.error('dot: sync 操作出错:', err)
                 }
                 break
-            // 新增：处理取消订阅请求
+
+            // 处理取消订阅请求
             case 'unsubscribe':
                 if (msg.key) {
                     const subs = this.subscriptions.get(sender)

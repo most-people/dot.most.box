@@ -349,6 +349,8 @@ export class DotClient {
 
             if (listeners.size === 0) {
                 this.listeners.delete(key)
+
+                // 取消订阅该键
                 this.sendMessage({
                     type: 'unsubscribe',
                     key,
