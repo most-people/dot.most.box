@@ -11,6 +11,8 @@ var ethers = require('ethers');
 class DotServer {
     constructor(httpServer) {
         this.hasChanges = false;
+        // 跟踪客户端订阅
+        this.subscriptions = new Map();
         this.peers = new Set();
         this.data = new Map();
         this.dataFile = path.join(os.homedir(), 'dot-data.json'); // 文件目录 ~/dot-data.json
@@ -26,6 +28,8 @@ class DotServer {
         this.server.on('connection', (socket) => {
             console.log('dot: 新客户端已连接');
             this.peers.add(socket);
+            // 初始化该客户端的订阅集合
+            this.subscriptions.set(socket, new Set());
             socket.on('message', (message) => {
                 try {
                     const msg = JSON.parse(message.toString());
@@ -38,6 +42,8 @@ class DotServer {
             socket.on('close', () => {
                 console.log('dot: 客户端断开连接');
                 this.peers.delete(socket);
+                // 移除该客户端的订阅信息
+                this.subscriptions.delete(socket);
             });
             socket.on('error', (error) => {
                 console.error('dot: WebSocket 错误:', error);
@@ -71,14 +77,14 @@ class DotServer {
                                     type: 'ack',
                                     key: msg.key,
                                 }));
-                                // 广播同步消息给所有客户端
+                                // 广播同步消息给订阅了这个键的客户端
                                 this.broadcast({
                                     type: 'sync',
                                     key: msg.key,
                                     value: msg.value,
                                     sig: msg.sig,
                                     timestamp: msg.timestamp,
-                                }, null);
+                                }, sender);
                             }
                             else {
                                 sender.send(JSON.stringify({
@@ -106,6 +112,12 @@ class DotServer {
             case 'get':
                 try {
                     if (msg.key) {
+                        // 当客户端请求数据时，自动订阅该键
+                        const subs = this.subscriptions.get(sender);
+                        if (subs) {
+                            subs.add(msg.key);
+                            console.log(`dot: 客户端订阅了 ${msg.key}`);
+                        }
                         const data = this.data.get(msg.key);
                         sender.send(JSON.stringify({
                             type: 'get_response',
@@ -137,6 +149,22 @@ class DotServer {
                 }
                 catch (err) {
                     console.error('dot: sync 操作出错:', err);
+                }
+                break;
+            // 处理取消订阅请求
+            case 'unsubscribe':
+                if (msg.key) {
+                    const subs = this.subscriptions.get(sender);
+                    if (subs) {
+                        subs.delete(msg.key);
+                        console.log(`dot: 客户端取消订阅了 ${msg.key}`);
+                    }
+                    // 发送取消订阅确认
+                    sender.send(JSON.stringify({
+                        type: 'ack',
+                        key: msg.key,
+                        message: 'Unsubscription confirmed',
+                    }));
                 }
                 break;
         }
@@ -175,7 +203,6 @@ class DotServer {
             };
             this.data.set(key, entry);
             this.hasChanges = true;
-            // this.saveData()
             return true;
         }
         catch (err) {
@@ -214,15 +241,22 @@ class DotServer {
             console.error('dot: 加载数据出错:', err);
         }
     }
+    // 修改广播方法，只向订阅了指定键的客户端发送消息
     broadcast(message, exclude) {
+        if (!message.key)
+            return;
         const msg = JSON.stringify(message);
         this.peers.forEach((peer) => {
-            if ((!exclude || peer !== exclude) && peer.readyState === WebSocket.OPEN) {
-                try {
-                    peer.send(msg);
-                }
-                catch (err) {
-                    console.error('dot: 广播消息出错:', err);
+            if (peer !== exclude && peer.readyState === WebSocket.OPEN) {
+                // 检查该客户端是否订阅了这个键
+                const subs = this.subscriptions.get(peer);
+                if (subs && subs.has(message.key)) {
+                    try {
+                        peer.send(msg);
+                    }
+                    catch (err) {
+                        console.error('dot: 广播消息出错:', err);
+                    }
                 }
             }
         });

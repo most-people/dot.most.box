@@ -180,7 +180,8 @@
                 node.ws.onclose = () => {
                     console.log(`与节点断开连接: ${node.url}`);
                     node.isConnected = false;
-                    // setTimeout(() => this.connectNode(node), 1000)
+                    // 在5秒后尝试重新连接
+                    // setTimeout(() => this.connectNode(node), 5000)
                 };
                 node.ws.onerror = (error) => {
                     console.error(`WebSocket 错误 (${node.url}):`, error);
@@ -323,6 +324,7 @@
             if (listeners) {
                 listeners.add({ callback, decrypt });
             }
+            // 发送 get 请求获取数据，同时在服务器端自动完成订阅
             this.sendMessage({
                 type: 'get',
                 key,
@@ -332,6 +334,11 @@
         off(key, callback) {
             if (!callback) {
                 this.listeners.delete(key);
+                // 取消订阅该键
+                this.sendMessage({
+                    type: 'unsubscribe',
+                    key,
+                });
                 return this;
             }
             const listeners = this.listeners.get(key);
@@ -344,6 +351,11 @@
                 }
                 if (listeners.size === 0) {
                     this.listeners.delete(key);
+                    // 取消订阅该键
+                    this.sendMessage({
+                        type: 'unsubscribe',
+                        key,
+                    });
                 }
             }
             return this;

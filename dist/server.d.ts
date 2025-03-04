@@ -11,6 +11,7 @@ declare class DotServer {
     private dataFile;
     private server;
     private hasChanges;
+    private subscriptions;
     constructor(httpServer: Server);
     private checkDotKey;
     private handleMessage;
