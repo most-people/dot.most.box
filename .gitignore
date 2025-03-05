@@ -1,1 +1,4 @@
 node_modules
+ssl/ca_bundle.crt
+ssl/certificate.crt
+ssl/private.key
