@@ -50,6 +50,7 @@
             // 监听用户数据变化 - 现在自动处理解密
             let t = 0
             dot.on('profile', (profile, timestamp) => {
+                console.log('🌊', profile)
                 if (timestamp > t) {
                     t = timestamp
                     if (profile && profile.name) {

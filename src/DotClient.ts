@@ -285,6 +285,7 @@ export class DotClient {
             const message = JSON.stringify(messageObject)
             const sig = await signer.signMessage(message)
 
+            // 发送消息到服务器
             this.sendMessage({
                 type: 'put',
                 key,
@@ -292,6 +293,17 @@ export class DotClient {
                 sig,
                 timestamp, // 添加时间戳到发送的消息中
             })
+
+            // 触发本地监听器
+            const listeners = this.listeners.get(key)
+            if (listeners) {
+                for (const listener of listeners) {
+                    // 如果数据已加密且监听器要求解密，则使用原始值
+                    // 如果数据未加密，则使用原始值
+                    // 如果数据已加密且监听器不要求解密，则使用加密后的值
+                    listener.callback(encrypt && !listener.decrypt ? finalValue : value, timestamp)
+                }
+            }
         } catch (err) {
             throw err
         }

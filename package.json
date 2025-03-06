@@ -23,7 +23,7 @@
   ],
   "scripts": {
     "start": "node server.mjs --port=1976",
-    "dev": "nodemon server.mjs --port=1976",
+    "dev": "npx nodemon server.mjs --port=1976",
     "build-watch": "rollup -c -w",
     "build": "rollup -c",
     "pre-publish": "rm -rf dist && rm -rf node_modules && pnpm i && npm run build",
