@@ -12,7 +12,7 @@ export interface DotData {
 }
 
 export interface Message {
-    type: 'put' | 'get' | 'sync' | 'get_response' | 'error' | 'unsubscribe'
+    type: 'put' | 'get' | 'sync' | 'get_response' | 'error' | 'off'
     key: string
     value?: any
     sig?: string
@@ -184,7 +184,7 @@ export class DotServer {
                 break
 
             // 处理取消订阅请求
-            case 'unsubscribe':
+            case 'off':
                 if (msg.key) {
                     const subs = this.subscriptions.get(sender)
                     if (subs) {

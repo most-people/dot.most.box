@@ -312,10 +312,7 @@ export class DotClient {
         }
 
         // 发送 get 请求获取数据，同时在服务器端自动完成订阅
-        this.sendMessage({
-            type: 'get',
-            key,
-        })
+        this.sendMessage({ type: 'get', key })
 
         return this
     }
@@ -325,10 +322,7 @@ export class DotClient {
             this.listeners.delete(key)
 
             // 取消订阅该键
-            this.sendMessage({
-                type: 'unsubscribe',
-                key,
-            })
+            this.sendMessage({ type: 'off', key })
 
             return this
         }
@@ -346,10 +340,7 @@ export class DotClient {
                 this.listeners.delete(key)
 
                 // 取消订阅该键
-                this.sendMessage({
-                    type: 'unsubscribe',
-                    key,
-                })
+                this.sendMessage({ type: 'off', key })
             }
         }
 

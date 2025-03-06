@@ -147,7 +147,7 @@ class DotServer {
                 }
                 break;
             // 处理取消订阅请求
-            case 'unsubscribe':
+            case 'off':
                 if (msg.key) {
                     const subs = this.subscriptions.get(sender);
                     if (subs) {
