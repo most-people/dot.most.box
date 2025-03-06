@@ -1,6 +1,6 @@
 {
   "name": "dot.most.box",
-  "version": "0.2.4",
+  "version": "0.2.5",
   "description": "Pale Blue Dot",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
