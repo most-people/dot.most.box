@@ -72,11 +72,6 @@ class DotServer {
                         if (this.checkDotKey(msg.key)) {
                             const success = this.putData(msg.key, msg.value, msg.sig, msg.timestamp);
                             if (success) {
-                                // 发送确认消息给发送者
-                                sender.send(JSON.stringify({
-                                    type: 'ack',
-                                    key: msg.key,
-                                }));
                                 // 广播同步消息给订阅了这个键的客户端
                                 this.broadcast({
                                     type: 'sync',
@@ -159,12 +154,6 @@ class DotServer {
                         subs.delete(msg.key);
                         console.log(`dot: 客户端取消订阅了 ${msg.key}`);
                     }
-                    // 发送取消订阅确认
-                    sender.send(JSON.stringify({
-                        type: 'ack',
-                        key: msg.key,
-                        message: 'Unsubscription confirmed',
-                    }));
                 }
                 break;
         }

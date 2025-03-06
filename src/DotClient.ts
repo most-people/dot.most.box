@@ -209,11 +209,6 @@ export class DotClient {
                     }
                 }
                 break
-
-            case 'ack':
-                console.log(`数据已保存，键名: ${msg.key}`)
-                break
-
             case 'error':
                 console.error(`错误: ${msg.message}`)
                 break

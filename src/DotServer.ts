@@ -12,7 +12,7 @@ export interface DotData {
 }
 
 export interface Message {
-    type: 'put' | 'get' | 'sync' | 'get_response' | 'ack' | 'error' | 'unsubscribe'
+    type: 'put' | 'get' | 'sync' | 'get_response' | 'error' | 'unsubscribe'
     key: string
     value?: any
     sig?: string
@@ -97,14 +97,6 @@ export class DotServer {
                             const success = this.putData(msg.key, msg.value, msg.sig, msg.timestamp)
 
                             if (success) {
-                                // 发送确认消息给发送者
-                                sender.send(
-                                    JSON.stringify({
-                                        type: 'ack',
-                                        key: msg.key,
-                                    } as Message),
-                                )
-
                                 // 广播同步消息给订阅了这个键的客户端
                                 this.broadcast(
                                     {
@@ -199,14 +191,6 @@ export class DotServer {
                         subs.delete(msg.key)
                         console.log(`dot: 客户端取消订阅了 ${msg.key}`)
                     }
-                    // 发送取消订阅确认
-                    sender.send(
-                        JSON.stringify({
-                            type: 'ack',
-                            key: msg.key,
-                            message: 'Unsubscription confirmed',
-                        } as Message),
-                    )
                 }
                 break
         }
