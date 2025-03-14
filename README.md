@@ -3,43 +3,37 @@
 基于去中心化节点的实时数据同步工具
 
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/version-0.2.2-green.svg)](https://github.com/most-people/dot.most.box/releases)
+[![Version](https://img.shields.io/badge/version-0.2.6-green.svg)](https://github.com/most-people/dot.most.box/releases)
 [![GitHub stars](https://img.shields.io/github/stars/most-people/dot.most.box.svg?style=social&label=Stars)](https://github.com/most-people/dot.most.box)
 [![GitHub forks](https://img.shields.io/github/forks/most-people/dot.most.box.svg?style=social&label=Fork)](https://github.com/most-people/dot.most.box)
 
-## 什么是 dot.most.box?
+## 什么是 dot.most.box？
 
-dot.most.box 是一个实时数据同步工具，它让用户可以在多个设备之间实时同步数据，而无需依赖中心化服务器。每个用户都可以搭建自己的节点，形成一个强大的去中心化网络。
-
-想象一下每个人都有无数张画板，当你每画一笔，别人的画板上会立刻出现这一笔。你可以：
-
--   与朋友约定好用哪张画板，就可以一起聊天
--   创建只有你能编辑、别人只能查看的画板
--   无需中央服务器，实现真正的点对点通信
-
-## 特性
-
--   🔐 **加密通信**：基于公钥/私钥加密的安全通信
--   🔄 **实时同步**：数据变更实时推送到所有连接的客户端
--   🌐 **去中心化**：每个用户都可以成为节点，不依赖中央服务器
--   📱 **平台支持**：浏览器、Node.js、React Native 环境均可使用
--   💼 **钱包集成**：支持以太坊钱包认证和签名
+dot.most.box 是一个去中心化的实时数据同步工具，它允许应用程序在不依赖中央服务器的情况下实现数据的安全存储和实时同步。
 
 ## 在线演示
 
-https://most.box#dot.most.box
+体验在线演示：[https://most.box#dot.most.box](https://most.box#dot.most.box)
 
-## 安装
+## 核心特性
 
-### NPM 安装
+-   🔐 **安全加密**：基于公钥/私钥的端到端加密通信
+-   🔄 **实时同步**：数据变更自动推送到所有连接的客户端
+-   🌐 **去中心化**：每个用户都可以成为节点，不依赖中央服务器
+-   📱 **平台支持**：兼容浏览器、Node.js、React Native 等环境
+-   💼 **钱包集成**：支持以太坊钱包认证和签名
+
+## 快速开始
+
+### 安装
 
 ```bash
 npm install dot.most.box
 ```
 
-## 快速开始
+### 服务端配置
 
-## 服务端 Http | Express | Nest.js | Koa2 | Fastify...
+创建一个简单的服务器：
 
 ```js
 import DotServer from 'dot.most.box/server'
@@ -47,12 +41,12 @@ import http from 'http'
 
 const server = http.createServer()
 new DotServer(server)
-server.listen(1976, () => console.log('Server running on port 1976'))
+server.listen(1976, () => console.log('服务器运行在端口 1976'))
 ```
 
-[其他后端框架示例](SERVER.md)
+[查看更多后端框架集成示例](SERVER.md)
 
-## 客户端 React | Vue | React Native...
+### 客户端使用
 
 ```js
 import Dot from 'dot.most.box'
@@ -61,9 +55,7 @@ const { DotClient } = Dot
 const dotClient = new DotClient(['http://localhost:1976'])
 ```
 
-## 浏览器直接引入
-
-您也可以通过 CDN 或者直接在 HTML 中引入脚本文件的方式使用:
+### 浏览器直接引入
 
 ```html
 <!-- 依赖库 -->
@@ -79,11 +71,13 @@ const dotClient = new DotClient(['http://localhost:1976'])
 </script>
 ```
 
-## 认证与加密
+## 用户认证
 
 dot.most.box 提供两种用户认证方式：
 
 ### 1. 账号密码认证
+
+适合普通用户，无需安装钱包插件：
 
 ```js
 // 初始化钱包
@@ -101,6 +95,8 @@ dot.setPrivKey(wallet.private_key)
 ```
 
 ### 2. 钱包插件认证
+
+适合 Web3 用户，使用 MetaMask 等钱包插件：
 
 ```js
 // 连接以太坊钱包
@@ -120,7 +116,7 @@ dot.setPubKey(wallet.public_key)
 dot.setPrivKey(wallet.private_key)
 ```
 
-## 数据读写
+## 数据操作
 
 ### 写入数据
 
@@ -175,7 +171,7 @@ dot.on('profile', (profile, timestamp) => {
 dot.off('profile')
 ```
 
-## 完整的去中心化应用架构
+## 去中心化应用架构
 
 dot.most.box 是构建完全去中心化应用的关键组件。一个完整的去中心化应用架构可以包括：
 
@@ -210,48 +206,13 @@ pm2 start server.mjs --name dot.most.box
 node server.mjs --port=3000
 ```
 
-## 配置 Nginx
+## 参与贡献
 
-```nginx
-# dot.most.box
-# HTTPS 服务器
-server {
-    listen 443 ssl http2;
-    server_name dot.most.box;
-
-    ssl_certificate conf.d/most.box.pem;
-    ssl_certificate_key conf.d/most.box.key;
-
-    ssl_protocols TLSv1.2 TLSv1.3;
-    ssl_ciphers 'ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384';
-
-    location / {
-        proxy_pass http://127.0.0.1:1976/;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_http_version 1.1;
-        proxy_set_header Upgrade $http_upgrade;
-        proxy_set_header Connection 'upgrade';
-        proxy_set_header Host $host;
-    }
-}
-
-# HTTP 跳转 HTTPS
-server {
-    listen 80;
-    server_name dot.most.box;
-    return 301 https://$server_name$request_uri;
-}
-```
-
-## 贡献
-
-欢迎参与项目贡献！您可以通过以下方式参与：
+我们欢迎各种形式的贡献！您可以通过以下方式参与：
 
 -   在 GitHub 上[提交问题或建议](https://github.com/most-people/dot.most.box/issues/new)
--   直接提交代码改进
+-   提交代码改进
 -   帮助完善文档
-
-我们欢迎任何形式的贡献和反馈！
 
 ### 问题反馈
 
