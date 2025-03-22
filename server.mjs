@@ -1,10 +1,13 @@
 import os from 'os'
 import fs from 'fs'
+import { HDNodeWallet } from 'ethers'
 import { fileURLToPath } from 'node:url'
 import path from 'node:path'
 import fastify from 'fastify'
 import fastifyStatic from '@fastify/static'
 import { DotServer } from './dist/server.js'
+import Dot from './dist/index.js'
+import { timeStamp } from 'node:console'
 
 const __filename = fileURLToPath(import.meta.url) // 获取当前文件路径
 const __dirname = path.dirname(__filename) // 获取当前目录路径
@@ -58,7 +61,7 @@ const start = async () => {
         await server.listen({ port: PORT, host: '::' })
 
         // 初始化 DotServer
-        const dotServer = new DotServer(server.server)
+        new DotServer(server.server)
 
         // 遍历所有网络接口
         let ipv4 = ''
@@ -87,3 +90,27 @@ const start = async () => {
 }
 
 start()
+
+// 智能合约
+const smart = () => {
+    const dotClient = new Dot.DotClient(['https://api.most.red'])
+    const wallet = Dot.mostWallet(
+        'test',
+        'dot.app.most',
+        'I know loss mnemonic will lose my wallet.',
+    )
+    // 创建用户实例
+    const dot = dotClient.dot(wallet.address)
+    // 设置加密所需的密钥
+    dot.setPubKey(wallet.public_key)
+    dot.setPrivKey(wallet.private_key)
+    // 设置签名器
+    const signer = HDNodeWallet.fromPhrase(wallet.mnemonic)
+    dot.setSigner(signer)
+
+    // dot.on('messages', (data, timeStamp) => {
+    //     console.log('data', data)
+    // })
+}
+
+smart()
