@@ -157,24 +157,24 @@
                 // 添加设置公钥和私钥的方法
                 setPubKey: (publicKey) => this.setAddressPublicKey(address, publicKey),
                 setPrivKey: (privateKey) => this.setAddressPrivateKey(address, privateKey),
-                notify: (receiverAddress, message) => this.notify(address, receiverAddress, message),
+                notify: (receiver, value) => this.notify(address, receiver, value),
             };
         }
-        notify(senderAddress, receiverAddress, message) {
+        notify(sender, receiver, value) {
             return __awaiter(this, void 0, void 0, function* () {
                 // 获取发送者的签名器
-                const signer = this.getSigner(senderAddress);
+                const signer = this.getSigner(sender);
                 if (!signer) {
-                    throw new Error(`没有为地址 ${senderAddress} 设置签名器，无法发送通知`);
+                    throw new Error(`没有为地址 ${sender} 设置签名器，无法发送通知`);
                 }
                 try {
                     // 创建通知消息对象
                     const timestamp = Date.now();
                     const messageObject = {
-                        to: receiverAddress,
-                        value: message,
+                        to: receiver,
+                        value,
                         timestamp,
-                        sender: senderAddress,
+                        sender,
                     };
                     // 对消息进行签名
                     const messageStr = JSON.stringify(messageObject);
@@ -182,11 +182,11 @@
                     // 发送通知消息
                     this.sendMessage({
                         type: 'notify',
-                        key: `${receiverAddress}/notify`,
-                        value: message,
+                        key: `${receiver}/notify`,
+                        value,
                         sig,
                         timestamp,
-                        sender: senderAddress,
+                        sender,
                     });
                 }
                 catch (err) {

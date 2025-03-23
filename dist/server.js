@@ -185,25 +185,23 @@ class DotServer {
                             }));
                             break;
                         }
-                        // 获取现有通知数组或创建新数组
+                        // 获取现有通知对象或创建新对象
                         const existingData = this.data.get(notificationKey);
-                        let notifications = [];
-                        if (existingData && Array.isArray(existingData.value)) {
+                        let notifications = {};
+                        if (existingData &&
+                            typeof existingData.value === 'object' &&
+                            existingData.value !== null) {
                             notifications = existingData.value;
                         }
                         // 创建新通知对象
                         const newNotification = {
-                            from: msg.sender,
                             message: msg.value,
                             timestamp: msg.timestamp,
                             sig: msg.sig,
                         };
-                        // 添加到通知数组（最多保留最近的 99 条通知）
-                        notifications.push(newNotification);
-                        if (notifications.length > 99) {
-                            notifications = notifications.slice(-99);
-                        }
-                        // 存储更新后的通知数组
+                        // 直接用发送者地址作为键更新通知
+                        notifications[msg.sender] = newNotification;
+                        // 存储更新后的通知对象
                         const notificationData = {
                             value: notifications,
                             sig: '',

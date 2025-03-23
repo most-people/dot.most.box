@@ -18,7 +18,7 @@ interface DotMethods {
     setSigner: (signer: any) => void;
     setPubKey: (publicKey: string) => void;
     setPrivKey: (privateKey: string) => void;
-    notify: (receiverAddress: string, message: string) => Promise<void>;
+    notify: (receiver: string, value: any) => void;
 }
 declare class DotClient {
     private nodes;
@@ -36,7 +36,7 @@ declare class DotClient {
     private getPublicKey;
     private getPrivateKey;
     dot(address: string): DotMethods;
-    notify(senderAddress: string, receiverAddress: string, message: string): Promise<void>;
+    notify(sender: string, receiver: string, value: any): Promise<void>;
     private connectNode;
     private handleMessage;
     private sendMessage;

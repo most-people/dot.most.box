@@ -177,9 +177,19 @@
             try {
                 const dot = dotClient.dot(userAddress)
                 // 发送通知
-                await dot.notify(receiverAddress, message)
-                document.getElementById('notificationMessage').value = ''
-                console.log('发送成功')
+                const receiverDot = dotClient.dot(receiverAddress)
+                receiverDot.on('notify', (notifications) => {
+                    receiverDot.off('notify')
+                    let list = []
+                    if (notifications[userAddress]) {
+                        list = notifications[userAddress].message
+                    }
+                    list.push(message)
+                    dot.notify(receiverAddress, list)
+                    document.getElementById('notificationMessage').value = ''
+                    console.log('发送成功')
+                })
+
             } catch (error) {
                 console.error('发送失败:', error)
             }
@@ -189,19 +199,17 @@
         const displayNotifications = (notifications) => {
             const notificationList = document.getElementById('notificationList')
 
-            // 清空现有通知
-            notificationList.innerHTML = ''
-
-            if (!notifications || !Array.isArray(notifications)) {
+            if (!notifications || typeof notifications !== 'object' || Object.keys(notifications).length === 0) {
                 notificationList.innerHTML = '<div>暂无通知</div>'
                 return
             }
 
-            // 按时间戳排序，最新的在前面
-            notifications.sort((a, b) => b.timestamp - a.timestamp)
+            // 清空现有通知
+            notificationList.innerHTML = ''
+            const list = Object.keys(notifications).map(key => { return { from: key, ...notifications[key] } })
 
             // 显示通知
-            notifications.forEach(notification => {
+            list.sort((a, b) => b.timestamp - a.timestamp).forEach(notification => {
                 const notificationItem = document.createElement('div')
                 notificationItem.className = 'notification-item'
 
@@ -221,10 +229,10 @@
         document.getElementById('btnClearNotifications').addEventListener('click', async () => {
             try {
                 const dot = dotClient.dot(userAddress)
-                // 清除通知 - 通过将通知键设置为空数组来实现
-                await dot.put('notify', [])
+                // 清除通知 - 通过将通知键设置为空对象来实现
+                await dot.put('notify', {})
                 // 更新显示
-                displayNotifications([])
+                displayNotifications({})
             } catch (error) {
                 console.error('清除通知失败:', error)
                 alert('清除失败: ' + error.message)
