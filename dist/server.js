@@ -149,8 +149,25 @@ class DotServer {
             case 'notify':
                 try {
                     if (msg.key && msg.value && msg.sig && msg.timestamp && msg.sender) {
+                        // 检查通知内容长度
+                        const value = typeof msg.value === 'string' ? msg.value : JSON.stringify(msg.value);
+                        if (value.length > 500) {
+                            sender.send(JSON.stringify({
+                                type: 'error',
+                                message: '通知内容过长，最大长度为500个字符',
+                            }));
+                            break;
+                        }
                         // 构建通知路径：接收者地址/notify
                         const receiverAddress = msg.key.split('/')[0];
+                        // 验证接收者地址是否为有效的ETH地址
+                        if (!ethers.isAddress(receiverAddress)) {
+                            sender.send(JSON.stringify({
+                                type: 'error',
+                                message: '接收者地址不是有效的以太坊地址',
+                            }));
+                            break;
+                        }
                         const notificationKey = `${receiverAddress}/notify`;
                         // 验证签名
                         const messageObject = {
@@ -161,46 +178,46 @@ class DotServer {
                         };
                         const message = JSON.stringify(messageObject);
                         const recoveredAddress = ethers.verifyMessage(message, msg.sig);
-                        if (recoveredAddress.toLowerCase() === msg.sender.toLowerCase()) {
-                            // 获取现有通知数组或创建新数组
-                            const existingData = this.data.get(notificationKey);
-                            let notifications = [];
-                            if (existingData && Array.isArray(existingData.value)) {
-                                notifications = existingData.value;
-                            }
-                            // 创建新通知对象
-                            const newNotification = {
-                                message: msg.value,
-                                from: msg.sender,
-                                timestamp: msg.timestamp,
-                            };
-                            // 添加到通知数组（最多保留最近的50条通知）
-                            notifications.push(newNotification);
-                            if (notifications.length > 50) {
-                                notifications = notifications.slice(-50);
-                            }
-                            // 存储更新后的通知数组
-                            const notificationData = {
-                                value: notifications,
-                                sig: '',
-                                timestamp: Date.now(),
-                            };
-                            this.data.set(notificationKey, notificationData);
-                            this.hasChanges = true;
-                            // 广播给订阅者
-                            this.broadcast({
-                                type: 'sync',
-                                key: notificationKey,
-                                value: notificationData.value,
-                                timestamp: msg.timestamp,
-                            }, sender);
-                        }
-                        else {
+                        if (recoveredAddress !== msg.sender) {
                             sender.send(JSON.stringify({
                                 type: 'error',
                                 message: '签名验证失败',
                             }));
+                            break;
                         }
+                        // 获取现有通知数组或创建新数组
+                        const existingData = this.data.get(notificationKey);
+                        let notifications = [];
+                        if (existingData && Array.isArray(existingData.value)) {
+                            notifications = existingData.value;
+                        }
+                        // 创建新通知对象
+                        const newNotification = {
+                            from: msg.sender,
+                            message: msg.value,
+                            timestamp: msg.timestamp,
+                            sig: msg.sig,
+                        };
+                        // 添加到通知数组（最多保留最近的 99 条通知）
+                        notifications.push(newNotification);
+                        if (notifications.length > 99) {
+                            notifications = notifications.slice(-99);
+                        }
+                        // 存储更新后的通知数组
+                        const notificationData = {
+                            value: notifications,
+                            sig: '',
+                            timestamp: Date.now(),
+                        };
+                        this.data.set(notificationKey, notificationData);
+                        this.hasChanges = true;
+                        // 广播给订阅者
+                        this.broadcast({
+                            type: 'sync',
+                            key: notificationKey,
+                            value: notificationData.value,
+                            timestamp: msg.timestamp,
+                        }, sender);
                     }
                 }
                 catch (err) {

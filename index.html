@@ -178,11 +178,10 @@
                 const dot = dotClient.dot(userAddress)
                 // 发送通知
                 await dot.notify(receiverAddress, message)
-                alert('发送成功')
                 document.getElementById('notificationMessage').value = ''
+                console.log('发送成功')
             } catch (error) {
-                console.error('发送通知失败:', error)
-                alert('发送失败: ' + error.message)
+                console.error('发送失败:', error)
             }
         })
 
@@ -226,7 +225,6 @@
                 await dot.put('notify', [])
                 // 更新显示
                 displayNotifications([])
-                alert('通知已清除')
             } catch (error) {
                 console.error('清除通知失败:', error)
                 alert('清除失败: ' + error.message)
