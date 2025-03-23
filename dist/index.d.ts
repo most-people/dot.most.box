@@ -18,6 +18,7 @@ interface DotMethods {
     setSigner: (signer: any) => void;
     setPubKey: (publicKey: string) => void;
     setPrivKey: (privateKey: string) => void;
+    notify: (receiverAddress: string, message: string) => Promise<void>;
 }
 declare class DotClient {
     private nodes;
@@ -35,6 +36,7 @@ declare class DotClient {
     private getPublicKey;
     private getPrivateKey;
     dot(address: string): DotMethods;
+    notify(senderAddress: string, receiverAddress: string, message: string): Promise<void>;
     private connectNode;
     private handleMessage;
     private sendMessage;
@@ -53,4 +55,5 @@ declare const Dot: {
     mostDecode: (data: string, public_key: string, private_key: string) => string;
 };
 
-export { DotClient, type DotMethods, type MostWallet, Dot as default, mostDecode, mostEncode, mostWallet };
+export { DotClient, Dot as default, mostDecode, mostEncode, mostWallet };
+export type { DotMethods, MostWallet };

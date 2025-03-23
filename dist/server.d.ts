@@ -21,4 +21,5 @@ declare class DotServer {
     private broadcast;
 }
 
-export { type DotData, DotServer, DotServer as default };
+export { DotServer, DotServer as default };
+export type { DotData };

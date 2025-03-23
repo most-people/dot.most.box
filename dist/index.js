@@ -157,7 +157,43 @@
                 // 添加设置公钥和私钥的方法
                 setPubKey: (publicKey) => this.setAddressPublicKey(address, publicKey),
                 setPrivKey: (privateKey) => this.setAddressPrivateKey(address, privateKey),
+                notify: (receiverAddress, message) => this.notify(address, receiverAddress, message),
             };
+        }
+        notify(senderAddress, receiverAddress, message) {
+            return __awaiter(this, void 0, void 0, function* () {
+                // 获取发送者的签名器
+                const signer = this.getSigner(senderAddress);
+                if (!signer) {
+                    throw new Error(`没有为地址 ${senderAddress} 设置签名器，无法发送通知`);
+                }
+                try {
+                    // 创建通知消息对象
+                    const timestamp = Date.now();
+                    const messageObject = {
+                        to: receiverAddress,
+                        value: message,
+                        timestamp,
+                        sender: senderAddress,
+                    };
+                    // 对消息进行签名
+                    const messageStr = JSON.stringify(messageObject);
+                    const sig = yield signer.signMessage(messageStr);
+                    // 发送通知消息
+                    this.sendMessage({
+                        type: 'notify',
+                        key: `${receiverAddress}/notify`,
+                        value: message,
+                        sig,
+                        timestamp,
+                        sender: senderAddress,
+                    });
+                }
+                catch (err) {
+                    console.error('发送通知失败:', err);
+                    throw err;
+                }
+            });
         }
         connectNode(node) {
             try {

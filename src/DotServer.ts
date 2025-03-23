@@ -12,12 +12,13 @@ export interface DotData {
 }
 
 export interface Message {
-    type: 'put' | 'get' | 'sync' | 'get_response' | 'error' | 'off'
+    type: 'put' | 'get' | 'sync' | 'get_response' | 'error' | 'off' | 'notify'
     key: string
     value?: any
     sig?: string
     timestamp?: number
     message?: string
+    sender?: string
 }
 
 export class DotServer {
@@ -183,7 +184,83 @@ export class DotServer {
                 }
                 break
 
-            // 处理取消订阅请求
+            case 'notify':
+                try {
+                    if (msg.key && msg.value && msg.sig && msg.timestamp && msg.sender) {
+                        // 构建通知路径：接收者地址/notify
+                        const receiverAddress = msg.key.split('/')[0]
+                        const notificationKey = `${receiverAddress}/notify`
+
+                        // 验证签名
+                        const messageObject = {
+                            to: receiverAddress,
+                            value: msg.value,
+                            timestamp: msg.timestamp,
+                            sender: msg.sender,
+                        }
+                        const message = JSON.stringify(messageObject)
+                        const recoveredAddress = verifyMessage(message, msg.sig)
+
+                        if (recoveredAddress.toLowerCase() === msg.sender.toLowerCase()) {
+                            // 获取现有通知数组或创建新数组
+                            const existingData = this.data.get(notificationKey)
+                            let notifications = []
+
+                            if (existingData && Array.isArray(existingData.value)) {
+                                notifications = existingData.value
+                            }
+
+                            // 创建新通知对象
+                            const newNotification = {
+                                message: msg.value,
+                                from: msg.sender,
+                                timestamp: msg.timestamp,
+                            }
+
+                            // 添加到通知数组（最多保留最近的50条通知）
+                            notifications.push(newNotification)
+                            if (notifications.length > 50) {
+                                notifications = notifications.slice(-50)
+                            }
+
+                            // 存储更新后的通知数组
+                            const notificationData: DotData = {
+                                value: notifications,
+                                sig: msg.sig,
+                                timestamp: msg.timestamp,
+                            }
+                            this.data.set(notificationKey, notificationData)
+                            this.hasChanges = true
+
+                            // 广播给订阅者
+                            this.broadcast(
+                                {
+                                    type: 'sync',
+                                    key: notificationKey,
+                                    value: notificationData.value,
+                                    timestamp: msg.timestamp,
+                                },
+                                sender,
+                            )
+                        } else {
+                            sender.send(
+                                JSON.stringify({
+                                    type: 'error',
+                                    message: '签名验证失败',
+                                } as Message),
+                            )
+                        }
+                    }
+                } catch (err) {
+                    console.error('dot: 处理通知出错:', err)
+                    sender.send(
+                        JSON.stringify({
+                            type: 'error',
+                            message: '通知发送失败',
+                        } as Message),
+                    )
+                }
+                break
             case 'off':
                 if (msg.key) {
                     const subs = this.subscriptions.get(sender)

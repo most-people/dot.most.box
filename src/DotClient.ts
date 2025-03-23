@@ -37,6 +37,7 @@ export interface DotMethods {
     setSigner: (signer: any) => void // 设置签名器
     setPubKey: (publicKey: string) => void // 设置公钥
     setPrivKey: (privateKey: string) => void // 设置私钥
+    notify: (receiverAddress: string, message: string) => Promise<void> // 通知
 }
 
 export class DotClient {
@@ -129,6 +130,45 @@ export class DotClient {
             // 添加设置公钥和私钥的方法
             setPubKey: (publicKey: string) => this.setAddressPublicKey(address, publicKey),
             setPrivKey: (privateKey: string) => this.setAddressPrivateKey(address, privateKey),
+            notify: (receiverAddress: string, message: string) =>
+                this.notify(address, receiverAddress, message),
+        }
+    }
+
+    async notify(senderAddress: string, receiverAddress: string, message: string): Promise<void> {
+        // 获取发送者的签名器
+        const signer = this.getSigner(senderAddress)
+
+        if (!signer) {
+            throw new Error(`没有为地址 ${senderAddress} 设置签名器，无法发送通知`)
+        }
+
+        try {
+            // 创建通知消息对象
+            const timestamp = Date.now()
+            const messageObject = {
+                to: receiverAddress,
+                value: message,
+                timestamp,
+                sender: senderAddress,
+            }
+
+            // 对消息进行签名
+            const messageStr = JSON.stringify(messageObject)
+            const sig = await signer.signMessage(messageStr)
+
+            // 发送通知消息
+            this.sendMessage({
+                type: 'notify',
+                key: `${receiverAddress}/notify`,
+                value: message,
+                sig,
+                timestamp,
+                sender: senderAddress,
+            })
+        } catch (err) {
+            console.error('发送通知失败:', err)
+            throw err
         }
     }
 
