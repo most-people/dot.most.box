@@ -61,6 +61,8 @@
             <h4>我的通知</h4>
             <div class="notification-list" id="notificationList"></div>
 
+            <button id="btnClearNotifications" style=" background-color: #f44336;">清除所有通知</button>
+
         </div>
     </div>
 
@@ -216,6 +218,21 @@
                 notificationList.appendChild(notificationItem)
             })
         }
+
+        document.getElementById('btnClearNotifications').addEventListener('click', async () => {
+            try {
+                const dot = dotClient.dot(userAddress)
+                // 清除通知 - 通过将通知键设置为空数组来实现
+                await dot.put('notify', [])
+                // 更新显示
+                displayNotifications([])
+                alert('通知已清除')
+            } catch (error) {
+                console.error('清除通知失败:', error)
+                alert('清除失败: ' + error.message)
+            }
+        })
+
     </script>
 </body>
 

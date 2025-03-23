@@ -182,8 +182,8 @@ class DotServer {
                             // 存储更新后的通知数组
                             const notificationData = {
                                 value: notifications,
-                                sig: msg.sig,
-                                timestamp: msg.timestamp,
+                                sig: '',
+                                timestamp: Date.now(),
                             };
                             this.data.set(notificationKey, notificationData);
                             this.hasChanges = true;
