@@ -3,13 +3,9 @@
 基于去中心化节点的实时数据同步工具
 
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/version-0.2.6-green.svg)](https://github.com/most-people/dot.most.box/releases)
+[![Version](https://img.shields.io/badge/version-0.2.9-green.svg)](https://github.com/most-people/dot.most.box/releases)
 [![GitHub stars](https://img.shields.io/github/stars/most-people/dot.most.box.svg?style=social&label=Stars)](https://github.com/most-people/dot.most.box)
 [![GitHub forks](https://img.shields.io/github/forks/most-people/dot.most.box.svg?style=social&label=Fork)](https://github.com/most-people/dot.most.box)
-
-## 什么是 dot.most.box？
-
-dot.most.box 是一个去中心化的实时数据同步工具，它允许应用程序在不依赖中央服务器的情况下实现数据的安全存储和实时同步。
 
 ## 在线演示
 
@@ -30,21 +26,6 @@ dot.most.box 是一个去中心化的实时数据同步工具，它允许应用�
 ```bash
 npm install dot.most.box
 ```
-
-### 服务端配置
-
-创建一个简单的服务器：
-
-```js
-import DotServer from 'dot.most.box/server'
-import http from 'http'
-
-const server = http.createServer()
-new DotServer(server)
-server.listen(1976, () => console.log('服务器运行在端口 1976'))
-```
-
-[查看更多后端框架集成示例](SERVER.md)
 
 ### 客户端使用
 
@@ -94,26 +75,21 @@ dot.setPubKey(wallet.public_key)
 dot.setPrivKey(wallet.private_key)
 ```
 
-### 2. 钱包插件认证
+### 2. 以太坊钱包认证
 
-适合 Web3 用户，使用 MetaMask 等钱包插件：
+适合 Web3 用户，支持 MetaMask 等钱包：
 
 ```js
-// 连接以太坊钱包
-const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' })
+// 连接 MetaMask
 const provider = new ethers.BrowserProvider(window.ethereum)
 const signer = await provider.getSigner()
 const address = await signer.getAddress()
-const sig = await signer.signMessage(address)
-const wallet = Dot.mostWallet(address, sig)
 
 // 设置签名器
 dot.setSigner(signer)
 
-// 设置加密所需的密钥
+// 使用当前地址
 const dot = client.dot(address)
-dot.setPubKey(wallet.public_key)
-dot.setPrivKey(wallet.private_key)
 ```
 
 ## 数据操作
@@ -171,16 +147,6 @@ dot.on('profile', (profile, timestamp) => {
 dot.off('profile')
 ```
 
-## 去中心化应用架构
-
-dot.most.box 是构建完全去中心化应用的关键组件。一个完整的去中心化应用架构可以包括：
-
--   **用户身份**：加密钱包（如 MetaMask, OKX 钱包等）
--   **域名**：去中心化域名（.box）
--   **前端**：IPFS（通过 Fleek 等服务部署）
--   **数据存储**：dot.most.box
--   **紧急恢复**：以太坊智能合约
-
 ## 部署自己的节点
 
 通过启动 dot.most.box 节点，您可以为去中心化网络做出贡献：
@@ -205,6 +171,20 @@ pm2 start server.mjs --name dot.most.box
 ```bash
 node server.mjs --port=3000
 ```
+
+## SSL 证书配置
+
+当您需要启用 HTTPS 时，请在 `ssl` 目录中配置以下文件：
+
+必需文件：
+
+-   `private.key`: 服务器私钥
+-   `certificate.crt`: 主证书文件
+-   `ca_bundle.crt`: 中间证书链
+
+当必需文件存在时，服务器会自动启用 HTTPS 协议。
+
+您可以从 [ZeroSSL](https://zerossl.com) 等服务商申请免费的 SSL 证书。
 
 ## 参与贡献
 
