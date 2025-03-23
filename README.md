@@ -3,7 +3,7 @@
 基于去中心化节点的实时数据同步工具
 
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/version-0.2.9-green.svg)](https://github.com/most-people/dot.most.box/releases)
+[![Version](https://img.shields.io/badge/version-0.3.0-green.svg)](https://github.com/most-people/dot.most.box/releases)
 [![GitHub stars](https://img.shields.io/github/stars/most-people/dot.most.box.svg?style=social&label=Stars)](https://github.com/most-people/dot.most.box)
 [![GitHub forks](https://img.shields.io/github/forks/most-people/dot.most.box.svg?style=social&label=Fork)](https://github.com/most-people/dot.most.box)
 
