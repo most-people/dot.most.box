@@ -103,6 +103,7 @@
 
             // 监听通知
             dot.on('notify', (notifications) => {
+                console.log('🌊', notifications)
                 displayNotifications(notifications)
             })
         }
@@ -179,10 +180,11 @@
                 // 发送通知
                 const receiverDot = dotClient.dot(receiverAddress)
                 receiverDot.on('notify', (notifications) => {
+
                     receiverDot.off('notify')
                     let list = []
                     if (notifications[userAddress]) {
-                        list = notifications[userAddress].message
+                        list = notifications[userAddress].value
                     }
                     list.push(message)
                     dot.notify(receiverAddress, list)
@@ -218,7 +220,7 @@
 
                 notificationItem.innerHTML = `
                     <div><strong>发送者:</strong> ${notification.from}</div>
-                    <div><strong>内容:</strong> ${notification.message}</div>
+                    <div><strong>内容:</strong> ${notification.value}</div>
                     <div><strong>时间:</strong> ${formattedDate}</div>
                 `
 

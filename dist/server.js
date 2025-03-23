@@ -193,14 +193,12 @@ class DotServer {
                             existingData.value !== null) {
                             notifications = existingData.value;
                         }
-                        // 创建新通知对象
-                        const newNotification = {
-                            message: msg.value,
+                        // 更新通知
+                        notifications[msg.sender] = {
+                            value: msg.value,
                             timestamp: msg.timestamp,
                             sig: msg.sig,
                         };
-                        // 直接用发送者地址作为键更新通知
-                        notifications[msg.sender] = newNotification;
                         // 存储更新后的通知对象
                         const notificationData = {
                             value: notifications,

@@ -236,7 +236,7 @@ export class DotServer {
 
                         // 获取现有通知对象或创建新对象
                         const existingData = this.data.get(notificationKey)
-                        let notifications: Record<string, any> = {}
+                        let notifications: Record<string, DotData> = {}
 
                         if (
                             existingData &&
@@ -246,15 +246,12 @@ export class DotServer {
                             notifications = existingData.value
                         }
 
-                        // 创建新通知对象
-                        const newNotification = {
-                            message: msg.value,
+                        // 更新通知
+                        notifications[msg.sender] = {
+                            value: msg.value,
                             timestamp: msg.timestamp,
                             sig: msg.sig,
                         }
-
-                        // 直接用发送者地址作为键更新通知
-                        notifications[msg.sender] = newNotification
 
                         // 存储更新后的通知对象
                         const notificationData: DotData = {
