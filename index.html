@@ -29,17 +29,15 @@
 
 <body>
     <div id="app">
-        <h2>☭ 为人民服务</h2>
+        <h2>Most People ⅔ MOST.BOX</h2>
         <h1 id="hello">
-            IPFS + Filecoin + Fastify + dot.most.box + Smart Contracts = Fully DApp
+            IPFS + Fastify + Dot.most.box + Smart Contracts = Fully DApp
         </h1>
 
         <div class="wallet">
             <input id="inputUsername" placeholder="请输入用户名"></input>
             <input id="inputPassword" placeholder="请输入密码"></input>
             <button id="btnLogin">登录</button>
-            <div>Or</div>
-            <button id="btnConnect">连接钱包</button>
         </div>
 
         <span id="addressDisplay"></span>
@@ -103,7 +101,6 @@
 
             // 监听通知
             dot.on('notify', (notifications) => {
-                console.log('🌊', notifications)
                 displayNotifications(notifications)
             })
         }
@@ -124,37 +121,6 @@
             init(signer)
         })
 
-        btnConnect.addEventListener('click', async () => {
-            // 检查是否安装了钱包插件
-            if (typeof window.ethereum === 'undefined') {
-                alert('请先安装 OKX 钱包插件')
-                return
-            }
-
-            try {
-                // 请求用户连接 MetaMask
-                const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' })
-                // 创建 ethers provider 和 signer
-                const provider = new ethers.BrowserProvider(window.ethereum)
-                const signer = await provider.getSigner()
-                const address = await signer.getAddress()
-                const sig = await signer.signMessage(address)
-                const wallet = Dot.mostWallet(address, sig)
-
-                userAddress = address
-                addressDisplay.textContent = `当前地址: ${address}`
-
-                // 设置加密所需的密钥
-                const dot = dotClient.dot(userAddress)
-                dot.setPubKey(wallet.public_key)
-                dot.setPrivKey(wallet.private_key)
-
-                init(signer)
-            } catch (error) {
-                console.error('连接钱包失败:', error)
-                alert('连接钱包失败')
-            }
-        })
 
         btnSave.addEventListener('click', async () => {
             const dot = dotClient.dot(userAddress)
@@ -180,10 +146,9 @@
                 // 发送通知
                 const receiverDot = dotClient.dot(receiverAddress)
                 receiverDot.on('notify', (notifications) => {
-
                     receiverDot.off('notify')
                     let list = []
-                    if (notifications[userAddress]) {
+                    if (notifications?.[userAddress]) {
                         list = notifications[userAddress].value
                     }
                     list.push(message)
