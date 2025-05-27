@@ -125,8 +125,9 @@ const ipfs = create({
 // 查询所有文件
 server.get('/list', async (request, reply) => {
     try {
+        const type = request.query.type || 'recursive'
         const result = []
-        for await (const pin of ipfs.pin.ls({ type: 'recursive' })) {
+        for await (const pin of ipfs.pin.ls({ type })) {
             result.push(pin.cid.toString())
         }
         return result
@@ -136,11 +137,11 @@ server.get('/list', async (request, reply) => {
 })
 
 // 查询 CID 是否存在
-server.get('/exists/:cid', async (request, reply) => {
+server.get('/exists/:cid', async (request) => {
     try {
         const { cid } = request.params
         if (!cid) {
-            return reply.code(400).send({ error: 'Missing CID parameter' })
+            return false
         }
         const stat = await ipfs.block.stat(cid)
         return stat.cid.toString()
@@ -148,3 +149,4 @@ server.get('/exists/:cid', async (request, reply) => {
         return false
     }
 })
+
