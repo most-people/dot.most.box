@@ -1,13 +1,13 @@
 import os from 'os'
 import fs from 'fs'
-import { HDNodeWallet } from 'ethers'
 import { fileURLToPath } from 'node:url'
 import path from 'node:path'
 import fastify from 'fastify'
 import fastifyStatic from '@fastify/static'
 import { DotServer } from './dist/server.js'
-import Dot from './dist/index.js'
-import { timeStamp } from 'node:console'
+import { create } from 'ipfs-http-client'
+// import { HDNodeWallet } from 'ethers'
+// import Dot from './dist/index.js'
 
 const __filename = fileURLToPath(import.meta.url) // 获取当前文件路径
 const __dirname = path.dirname(__filename) // 获取当前目录路径
@@ -23,6 +23,7 @@ const interfaces = os.networkInterfaces()
 const hasCert = ['private.key', 'certificate.crt'].every((file) =>
     fs.existsSync(path.join(__dirname, 'ssl', file)),
 )
+
 const getHttps = () => {
     if (hasCert) {
         const cert = {
@@ -92,25 +93,62 @@ const start = async () => {
 start()
 
 // 智能合约
-const smart = () => {
-    const dotClient = new Dot.DotClient(['https://api.most.red'])
-    const wallet = Dot.mostWallet(
-        'test',
-        'dot.app.most',
-        'I know loss mnemonic will lose my wallet.',
-    )
-    // 创建用户实例
-    const dot = dotClient.dot(wallet.address)
-    // 设置加密所需的密钥
-    dot.setPubKey(wallet.public_key)
-    dot.setPrivKey(wallet.private_key)
-    // 设置签名器
-    const signer = HDNodeWallet.fromPhrase(wallet.mnemonic)
-    dot.setSigner(signer)
+// const smart = () => {
+//     const dotClient = new Dot.DotClient(['https://api.most.red'])
+//     const wallet = Dot.mostWallet(
+//         'test',
+//         'dot.app.most',
+//         'I know loss mnemonic will lose my wallet.',
+//     )
+//     // 创建用户实例
+//     const dot = dotClient.dot(wallet.address)
+//     // 设置加密所需的密钥
+//     dot.setPubKey(wallet.public_key)
+//     dot.setPrivKey(wallet.private_key)
+//     // 设置签名器
+//     const signer = HDNodeWallet.fromPhrase(wallet.mnemonic)
+//     dot.setSigner(signer)
 
-    // dot.on('messages', (data, timeStamp) => {
-    //     console.log('data', data)
-    // })
-}
+//     // dot.on('messages', (data, timeStamp) => {
+//     //     console.log('data', data)
+//     // })
+// }
 
-smart()
+// smart()
+
+// IPFS
+const ipfs = create({
+    url: 'http://localhost:5001/api/v0',
+    timeout: '30s'
+})
+
+// 查询所有文件
+server.get('/list', async (request, reply) => {
+    try {
+        const result = []
+        for await (const pin of ipfs.pin.ls({ type: 'recursive' })) {
+            result.push(pin.cid.toString())
+        }
+        return result
+    } catch (error) {
+        reply.code(500).send({ error: error.message, code: error.code })
+    }
+})
+
+// 查询 CID 是否存在
+server.get('/exists/:cid', async (request, reply) => {
+    try {
+        const { cid } = request.params
+        if (!cid) {
+            return reply.code(400).send({ error: 'Missing CID parameter' })
+        }
+
+        const stat = await ipfs.block.stat(cid)
+        return {
+            cid: stat.cid.toString(),
+            size: stat.size
+        }
+    } catch (error) {
+        reply.code(500).send({ error: error.message, code: error.code })
+    }
+})
