@@ -50,6 +50,8 @@ server.register(fastifyStatic, {
     root: __dirname,
     prefix: '/',
 })
+// 注册 multipart 插件以支持文件上传
+server.register(require('@fastify/multipart'))
 
 // API 路由
 server.get('/hello', async () => {
@@ -147,6 +149,48 @@ server.get('/exists/:cid', async (request) => {
         return stat.cid.toString()
     } catch (error) {
         return false
+    }
+})
+
+// 添加文件
+server.post('/add', async (request, reply) => {
+    try {
+        // 解析上传的文件（假设文件字段名为 "file"）
+        const data = await request.file()
+        const content = await data.toBuffer()
+        // 上传到IPFS
+        const result = await ipfs.add(content)
+        return { cid: result.cid.toString() }
+    } catch (error) {
+        reply.code(500).send({ error: error.message, code: error.code })
+    }
+})
+
+// 删除文件
+server.post('/remove/:cid', async (request, reply) => {
+    try {
+        const { cid } = request.params
+        if (!cid) {
+            return reply.code(400).send({ error: '参数 "arg" CID 是必需的' })
+        }
+        await ipfs.pin.rm(cid)
+        return { success: true, cid }
+    } catch (error) {
+        reply.code(500).send({ error: error.message, code: error.code })
+    }
+})
+
+// 垃圾回收
+server.post('/repo/gc', async (request, reply) => {
+    try {
+        const list = []
+        // 执行垃圾回收并收集清理的CID
+        for await (const cid of ipfs.repo.gc()) {
+            list.push(cid.toString())
+        }
+        return list
+    } catch (error) {
+        reply.code(500).send({ error: error.message, code: error.code })
     }
 })
 
