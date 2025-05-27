@@ -142,13 +142,9 @@ server.get('/exists/:cid', async (request, reply) => {
         if (!cid) {
             return reply.code(400).send({ error: 'Missing CID parameter' })
         }
-
         const stat = await ipfs.block.stat(cid)
-        return {
-            cid: stat.cid.toString(),
-            size: stat.size
-        }
+        return stat.cid.toString()
     } catch (error) {
-        reply.code(500).send({ error: error.message, code: error.code })
+        return false
     }
 })
