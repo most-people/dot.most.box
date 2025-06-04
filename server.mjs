@@ -60,13 +60,10 @@ server.register(fastifyStatic, {
 // 注册 multipart 插件以支持文件上传
 server.register(multipart)
 
-
 // API 路由
 server.get('/hello', async () => {
     return { hello: 'world' }
 })
-
-
 
 // DDNS 更新函数（Cloudflare 示例）
 const updateDDNS = async () => {
@@ -79,20 +76,20 @@ const updateDDNS = async () => {
                 name: DDNS_DOMAIN, // 目标子域名
                 content: ipv6, // 当前 IPv6 地址
                 ttl: 300, // TTL 时间（秒）
-                proxied: false // 是否启用 Cloudflare 代理（根据需求调整）
+                proxied: false, // 是否启用 Cloudflare 代理（根据需求调整）
             },
             {
                 headers: {
-                    'Authorization': `Bearer ${CLOUDFLARE_API_TOKEN}`,
-                    'Content-Type': 'application/json'
-                }
-            }
+                    Authorization: `Bearer ${CLOUDFLARE_API_TOKEN}`,
+                    'Content-Type': 'application/json',
+                },
+            },
         )
 
         if (response.data.success) {
             console.log(`DDNS 更新成功！当前 IPv6: ${ipv6}`)
         } else {
-            console.error('DDNS 更新失败:', response.data.errors.map(e => e.message).join('; '))
+            console.error('DDNS 更新失败:', response.data.errors.map((e) => e.message).join('; '))
         }
     } catch (error) {
         console.error('DDNS 更新请求异常:', error.message)
@@ -121,18 +118,20 @@ const getIP = () => {
     return { ipv4, ipv6 }
 }
 
+let dotServer = null
+
 // 启动服务
 const start = async () => {
     try {
         await server.listen({ port: PORT, host: '::' })
 
         // 初始化 DotServer
-        new DotServer(server.server)
+        dotServer = new DotServer(server.server)
 
         const { ipv4, ipv6 } = getIP()
         // 首次启动时更新 DDNS
         updateDDNS()
-        // 每 5 分钟定时更新 DDNS 
+        // 每 5 分钟定时更新 DDNS
         setInterval(updateDDNS, 5 * 60 * 1000)
         const protocol = hasCert ? 'https' : 'http'
         console.log(`IPv6   Server running at ${protocol}://[${ipv6}]:${PORT}`)
@@ -173,25 +172,25 @@ start()
 // IPFS
 const ipfs = create({
     url: 'http://localhost:5001/api/v0',
-    timeout: '30s'
+    timeout: '30s',
 })
 
 // 查询所有文件
-server.get('/list', async (request, reply) => {
-    try {
-        const type = request.query.type || 'recursive'
-        const result = []
-        for await (const pin of ipfs.pin.ls({ type })) {
-            result.push(pin.cid.toString())
-        }
-        return result
-    } catch (error) {
-        reply.code(500).send({ error: error.message, code: error.code })
-    }
-})
+// server.get('/list', async (request, reply) => {
+//     try {
+//         const type = request.query.type || 'recursive'
+//         const result = []
+//         for await (const pin of ipfs.pin.ls({ type })) {
+//             result.push(pin.cid.toString())
+//         }
+//         return result
+//     } catch (error) {
+//         reply.code(500).send({ error: error.message, code: error.code })
+//     }
+// })
 
 // 查询 CID 是否存在
-server.get('/exists/:cid', async (request) => {
+server.get('/has/:cid', async (request) => {
     try {
         const { cid } = request.params
         if (!cid) {
@@ -207,7 +206,7 @@ server.get('/exists/:cid', async (request) => {
 // 添加文件
 server.post('/add', async (request, reply) => {
     try {
-        // 解析上传的文件（假设文件字段名为 "file"）
+        // 解析上传的文件（文件字段名为 "file"）
         const data = await request.file()
         const content = await data.toBuffer()
         // 上传到IPFS
@@ -219,31 +218,29 @@ server.post('/add', async (request, reply) => {
 })
 
 // 删除文件
-server.post('/remove/:cid', async (request, reply) => {
-    try {
-        const { cid } = request.params
-        if (!cid) {
-            return reply.code(400).send({ error: '参数 "arg" CID 是必需的' })
-        }
-        await ipfs.pin.rm(cid)
-        return { success: true, cid }
-    } catch (error) {
-        reply.code(500).send({ error: error.message, code: error.code })
-    }
-})
+// server.post('/remove/:cid', async (request, reply) => {
+//     try {
+//         const { cid } = request.params
+//         if (!cid) {
+//             return reply.code(400).send({ error: '参数 "arg" CID 是必需的' })
+//         }
+//         await ipfs.pin.rm(cid)
+//         return { success: true, cid }
+//     } catch (error) {
+//         reply.code(500).send({ error: error.message, code: error.code })
+//     }
+// })
 
 // 垃圾回收
-server.post('/repo/gc', async (request, reply) => {
-    try {
-        const list = []
-        // 执行垃圾回收并收集清理的CID
-        for await (const cid of ipfs.repo.gc()) {
-            list.push(cid.toString())
-        }
-        return list
-    } catch (error) {
-        reply.code(500).send({ error: error.message, code: error.code })
-    }
-})
-
-
+// server.post('/repo/gc', async (request, reply) => {
+//     try {
+//         const list = []
+//         // 执行垃圾回收并收集清理的CID
+//         for await (const cid of ipfs.repo.gc()) {
+//             list.push(cid.toString())
+//         }
+//         return list
+//     } catch (error) {
+//         reply.code(500).send({ error: error.message, code: error.code })
+//     }
+// })
