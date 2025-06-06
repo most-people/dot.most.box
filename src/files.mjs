@@ -1,8 +1,30 @@
-import { isAddress } from "ethers";
+import { isAddress, verifyMessage } from "ethers";
 import { create } from "ipfs-http-client";
 
 // 创建 IPFS 客户端
 const ipfs = create({ url: "http://127.0.0.1:5001" });
+
+/**
+ * 验证token并返回地址
+ * @param {string} token - 格式为 "message.signature" 的token
+ * @returns {string | null} - 验证成功返回地址，失败返回空字符串
+ */
+const getAddress = (token) => {
+  if (token && typeof token === "string") {
+    try {
+      const [address, message, sig] = token.toLowerCase().split(".");
+      if (address && message && sig) {
+        if (address === verifyMessage(message, sig).toLowerCase()) {
+          return address;
+        }
+      }
+    } catch (error) {
+      console.error("Token验证失败:", error);
+    }
+  }
+
+  return null;
+};
 
 /**
  * 注册文件相关的路由
@@ -10,12 +32,13 @@ const ipfs = create({ url: "http://127.0.0.1:5001" });
  */
 export const registerFiles = (server) => {
   // 文件列表
-  server.get("/files/:address/*", async (request, reply) => {
-    const address = request.params.address || "";
-    const subPath = request.params["*"] || ""; // 获取子路径
-    if (!isAddress(address)) {
-      return reply.code(400).send("以太网地址错误");
+  server.post("/files/*", async (request, reply) => {
+    const address = getAddress(request.headers.authorization);
+    if (!address) {
+      return reply.code(400).send("token 无效");
     }
+
+    const subPath = request.params["*"] || ""; // 获取子路径
     try {
       // 构建完整路径，如果有子路径则包含子路径
       const fullPath = subPath ? `/${address}/${subPath}` : `/${address}`;
@@ -34,10 +57,10 @@ export const registerFiles = (server) => {
   });
 
   // 上传文件
-  server.put("/files/:address", async (request, reply) => {
-    const address = request.params.address || "";
-    if (!isAddress(address)) {
-      return reply.code(400).send("以太网地址错误");
+  server.put("/file.upload", async (request, reply) => {
+    const address = getAddress(request.headers.authorization);
+    if (!address) {
+      return reply.code(400).send("token 无效");
     }
 
     try {
@@ -57,7 +80,7 @@ export const registerFiles = (server) => {
       await ipfs.files.cp(`/ipfs/${fileAdded.cid}`, `/${address}/${filename}`);
 
       return {
-        success: true,
+        message: "上传成功",
         filename: filename,
         cid: fileAdded.cid.toString(),
         size: fileAdded.size,
