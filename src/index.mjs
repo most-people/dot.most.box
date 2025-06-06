@@ -21,9 +21,14 @@ server.register(fastifyStatic, {
 });
 
 // 注册 multipart 插件用于文件上传
-server.register(fastifyMultipart);
+server.register(fastifyMultipart, {
+  limits: {
+    fileSize: 100 * 1024 * 1024, // 设置单个文件大小限制为100MB
+    files: 1, // 限制同时上传的文件数量
+  },
+});
 
-// 文件列表 - 使用 ipfs-http-client 实现
+// 文件列表
 server.get("/files/:address", async (request, reply) => {
   const address = request.params.address || "";
   if (!isAddress(address)) {
@@ -37,8 +42,44 @@ server.get("/files/:address", async (request, reply) => {
     }
     return entries;
   } catch (error) {
-    const message = error.message || "未知错误";
-    return reply.code(400).send("文件列表获取失败 " + message);
+    if (error.message.includes("file does not exist")) {
+      return [];
+    }
+    return reply.code(400).send("文件列表获取失败 " + error.message);
+  }
+});
+
+// 上传文件
+server.put("/files/:address", async (request, reply) => {
+  const address = request.params.address || "";
+  if (!isAddress(address)) {
+    return reply.code(400).send("以太网地址错误");
+  }
+
+  try {
+    const data = await request.file();
+    if (!data) {
+      return reply.code(400).send("没有文件");
+    }
+
+    const buffer = await data.toBuffer();
+    const filename = data.filename || "unnamed";
+
+    // 将文件添加到IPFS
+    const fileAdded = await ipfs.add(buffer);
+
+    // 将文件复制到指定地址目录
+    await ipfs.files.mkdir(`/${address}`, { parents: true });
+    await ipfs.files.cp(`/ipfs/${fileAdded.cid}`, `/${address}/${filename}`);
+
+    return {
+      success: true,
+      filename: filename,
+      cid: fileAdded.cid.toString(),
+      size: fileAdded.size,
+    };
+  } catch (error) {
+    return reply.code(500).send("文件上传失败 " + error.message);
   }
 });
 
