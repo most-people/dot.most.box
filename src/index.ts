@@ -14,20 +14,21 @@ server.register(fastifyStatic, {
 
 // 文件列表 https://docs.ipfs.tech/reference/kubo/rpc/#api-v0-files-flush
 server.get("/files/:address", async (request, reply) => {
-  const address = (request.params as { address: string }).address;
+  const params = request.params as { address?: string };
+  const address = (params.address || "").toLowerCase();
   if (!isAddress(address)) {
-    return reply.code(400).send("Invalid ETH address");
+    return reply.code(400).send("以太网地址错误");
   }
   try {
     const res = await api({
       method: "post",
       url: "/files/ls",
-      params: { long: true, arg: "/" + address.toLowerCase() },
+      params: { long: true, arg: "/" + address },
     });
     return res.data?.Entries || [];
   } catch (error: any) {
-    const message = error?.response?.data?.Message || "/files/ls failed";
-    return reply.code(400).send(message);
+    const message = error?.response?.data?.Message || "";
+    return reply.code(400).send("文件列表获取失败 " + message);
   }
 });
 
