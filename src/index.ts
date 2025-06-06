@@ -1,9 +1,13 @@
 import fastify from "fastify";
+import fastifyStatic from "@fastify/static";
+import path from "path";
 
 const server = fastify();
 
-server.get("/", async () => {
-  return { hello: "world" };
+// 注册静态文件服务
+server.register(fastifyStatic, {
+  root: path.join(__dirname, "..", "public"),
+  prefix: "/",
 });
 
 const start = async () => {
