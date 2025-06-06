@@ -4,21 +4,19 @@
   "description": "TypeScript + Fastify",
   "main": "dist/index.js",
   "scripts": {
-    "dev": "nodemon --watch src --ext ts --exec ts-node src/index.ts",
-    "build": "tsc",
-    "start": "node dist/index.js",
+    "start": "node src/index.mjs",
+    "dev": "npx nodemon src/index.mjs",
     "yarn": "yarn"
   },
   "dependencies": {
-    "@fastify/static": "^8.2.0",
     "axios": "^1.9.0",
+    "dayjs": "^1.11.13",
     "ethers": "^6.14.3",
-    "fastify": "^5.3.3"
+    "ipfs-http-client": "^60.0.1"
   },
   "devDependencies": {
-    "@types/node": "^22.15.30",
-    "nodemon": "^3.1.10",
-    "ts-node": "^10.9.2",
-    "typescript": "^5.8.3"
+    "@fastify/multipart": "^9.0.3",
+    "@fastify/static": "^8.2.0",
+    "fastify": "^5.3.3"
   }
 }
