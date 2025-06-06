@@ -10,13 +10,16 @@ const ipfs = create({ url: "http://127.0.0.1:5001" });
  */
 export const registerFiles = (server) => {
   // 文件列表
-  server.get("/files/:address", async (request, reply) => {
+  server.get("/files/:address/*", async (request, reply) => {
     const address = request.params.address || "";
+    const subPath = request.params["*"] || ""; // 获取子路径
     if (!isAddress(address)) {
       return reply.code(400).send("以太网地址错误");
     }
     try {
-      const result = ipfs.files.ls(`/${address}`, { long: true });
+      // 构建完整路径，如果有子路径则包含子路径
+      const fullPath = subPath ? `/${address}/${subPath}` : `/${address}`;
+      const result = ipfs.files.ls(fullPath, { long: true });
       const entries = [];
       for await (const file of result) {
         entries.push(file);
@@ -26,7 +29,7 @@ export const registerFiles = (server) => {
       if (error.message.includes("file does not exist")) {
         return [];
       }
-      return reply.code(400).send("文件列表获取失败 " + error.message);
+      return reply.code(500).send("文件列表获取失败 " + error.message);
     }
   });
 
