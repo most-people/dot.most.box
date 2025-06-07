@@ -309,6 +309,7 @@
                 `;
 
           showResult(resultHtml, "success");
+          localStorage.token = [wallet.address, message, signature].join(".");
         } catch (error) {
           console.error("签名失败:", error);
           showResult("签名失败: " + error.message, "error");
@@ -324,16 +325,6 @@
 
       const clearMessage = () => {
         document.getElementById("message").value = "";
-      };
-
-      // 验证签名的辅助函数（可选）
-      const verifySignature = async (message, signature, address) => {
-        try {
-          const recoveredAddress = ethers.verifyMessage(message, signature);
-          return recoveredAddress.toLowerCase() === address.toLowerCase();
-        } catch (error) {
-          return false;
-        }
       };
 
       window.generateWallet = generateWallet;
