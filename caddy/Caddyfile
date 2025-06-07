@@ -24,3 +24,13 @@ api.most.red {
 mail.most.red {
         redir https://30273.webmail.dynadot.com/user/signin.html 302
 }
+
+# cid.most.red
+cid.most.red {
+        reverse_proxy 127.0.0.1:8080
+}
+
+# dot.most.red
+dot.most.red {
+        reverse_proxy 127.0.0.1:1976
+}

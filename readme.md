@@ -34,4 +34,7 @@ nohup ipfs daemon > /home/ubuntu/ipfs.log 2>&1 &
 
 # 检查是否运行
 ps aux | grep ipfs
+
+# 停止 IPFS
+kill 进程号
 ```
