@@ -8,14 +8,15 @@ import { verifyMessage } from "ethers";
 export const getAddress = (token) => {
   if (token && typeof token === "string") {
     try {
-      const [address, t, sig] = token.toLowerCase().split(".");
+      const [address, t, sig] = token.split(".");
       // token 有效期为 24 小时
       if (Date.now() - parseInt(t) > 1000 * 60 * 60 * 24) {
         return null;
       }
       if (address && t && sig) {
-        if (address === verifyMessage(t, sig).toLowerCase()) {
-          return address;
+        const ethAddress = verifyMessage(t, sig).toLowerCase();
+        if (address.toLowerCase() === ethAddress) {
+          return ethAddress;
         }
       }
     } catch (error) {

@@ -19,7 +19,7 @@ server.register(fastifyStatic, {
 // 注册 multipart 插件用于文件上传
 server.register(fastifyMultipart, {
   limits: {
-    fileSize: 100 * 1024 * 1024, // 设置单个文件大小限制为100MB
+    fileSize: 200 * 1024 * 1024, // 设置单个文件大小限制为200MB
     files: 1, // 限制同时上传的文件数量
   },
 });

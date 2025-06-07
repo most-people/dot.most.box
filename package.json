@@ -4,8 +4,8 @@
   "description": "TypeScript + Fastify",
   "main": "dist/index.js",
   "scripts": {
-    "start": "node src/index.mjs",
     "dev": "npx nodemon src/index.mjs",
+    "start": "node src/index.mjs",
     "yarn": "yarn"
   },
   "dependencies": {

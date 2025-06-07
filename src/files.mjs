@@ -54,7 +54,6 @@ export const registerFiles = (server) => {
       const fileAdded = await ipfs.add(buffer);
 
       // 将文件复制到指定地址目录
-      await ipfs.files.mkdir(`/${address}`, { parents: true });
       await ipfs.files.cp(`/ipfs/${fileAdded.cid}`, `/${address}/${filename}`, {
         parents: true,
       });
