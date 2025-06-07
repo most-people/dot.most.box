@@ -33,6 +33,7 @@ const start = async () => {
     await server.listen({ port });
     console.log(`http://[::1]:${port}`);
   } catch (err) {
+    console.error(err);
     server.log.error(err);
     process.exit(1);
   }

@@ -1,34 +1,8 @@
-import { verifyMessage } from "ethers";
-import { create } from "ipfs-http-client";
+import { create } from "kubo-rpc-client";
+import { getAddress } from "./mp.mjs";
 
 // 创建 IPFS 客户端
 const ipfs = create({ url: "http://127.0.0.1:5001" });
-
-/**
- * 验证 token 并返回地址
- * @param {string} token - 格式为 "address.message.signature" 的 token
- * @returns {string | null} - 验证成功返回地址，失败返回空字符串
- */
-const getAddress = (token) => {
-  if (token && typeof token === "string") {
-    try {
-      const [address, t, sig] = token.toLowerCase().split(".");
-      // token 有效期为 24 小时
-      if (Date.now() - parseInt(t) > 1000 * 60 * 60 * 24) {
-        return null;
-      }
-      if (address && t && sig) {
-        if (address === verifyMessage(t, sig).toLowerCase()) {
-          return address;
-        }
-      }
-    } catch (error) {
-      console.error("Token验证失败:", error);
-    }
-  }
-
-  return null;
-};
 
 /**
  * 注册文件相关的路由
@@ -61,7 +35,7 @@ export const registerFiles = (server) => {
   });
 
   // 上传文件
-  server.put("/file.upload", async (request, reply) => {
+  server.put("/files.upload", async (request, reply) => {
     const address = getAddress(request.headers.authorization);
     if (!address) {
       return reply.code(400).send("token 无效");
@@ -81,7 +55,9 @@ export const registerFiles = (server) => {
 
       // 将文件复制到指定地址目录
       await ipfs.files.mkdir(`/${address}`, { parents: true });
-      await ipfs.files.cp(`/ipfs/${fileAdded.cid}`, `/${address}/${filename}`);
+      await ipfs.files.cp(`/ipfs/${fileAdded.cid}`, `/${address}/${filename}`, {
+        parents: true,
+      });
 
       return {
         message: "上传成功",
