@@ -9,7 +9,7 @@ const ipfs = create({ url: "http://127.0.0.1:5001" });
  * @param {import('fastify').FastifyInstance} server - Fastify 服务器实例
  */
 export const registerFiles = (server) => {
-  // 文件列表
+  // 查看文件/目录
   server.post("/files/*", async (request, reply) => {
     const address = getAddress(request.headers.authorization);
     if (!address) {
@@ -60,6 +60,7 @@ export const registerFiles = (server) => {
       });
 
       return {
+        ok: true,
         message: "上传成功",
         filename: filename,
         cid: fileAdded.cid.toString(),
@@ -67,6 +68,27 @@ export const registerFiles = (server) => {
       };
     } catch (error) {
       return reply.code(500).send("文件上传失败 " + error.message);
+    }
+  });
+
+  // 删除文件/目录
+  server.delete("/files/*", async (request, reply) => {
+    const address = getAddress(request.headers.authorization);
+    if (!address) {
+      return reply.code(400).send("token 无效");
+    }
+
+    const subPath = request.params["*"] || ""; // 获取子路径
+    try {
+      // 构建完整路径，如果有子路径则包含子路径
+      const fullPath = subPath ? `/${address}/${subPath}` : `/${address}`;
+      await ipfs.files.rm(fullPath, { recursive: true });
+      return {
+        ok: true,
+        message: "删除成功",
+      };
+    } catch (error) {
+      return reply.code(500).send("文件删除失败 " + error.message);
     }
   });
 };
