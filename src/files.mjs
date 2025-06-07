@@ -48,7 +48,8 @@ export const registerFiles = (server) => {
       }
 
       const buffer = await data.toBuffer();
-      const filename = data.filename || "unnamed";
+      const path = data.fields.path?.value || "";
+      const filename = path || data.filename || "unnamed";
 
       // 将文件添加到IPFS
       const fileAdded = await ipfs.add(buffer);

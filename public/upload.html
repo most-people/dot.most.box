@@ -540,6 +540,7 @@
       async function uploadSingleFile(fileInfo, token) {
         const formData = new FormData();
         formData.append("file", fileInfo.file);
+        formData.append("path", fileInfo.path);
 
         const response = await fetch("/files.upload", {
           method: "PUT",
