@@ -1,0 +1,26 @@
+# api.most.red 主服务器配置
+api.most.red {
+        # 反向代理到本地服务
+        reverse_proxy 127.0.0.1:8001 {
+                # 超时设置
+                transport http {
+                        read_timeout 300s
+                        dial_timeout 300s
+                }
+        }
+
+        # 文件上传大小限制
+        request_body {
+                max_size 100MB
+        }
+
+        # 安全头设置
+        header {
+                Strict-Transport-Security "max-age=63072000; includeSubDomains; preload"
+        }
+}
+
+# mail.most.red 重定向
+mail.most.red {
+        redir https://30273.webmail.dynadot.com/user/signin.html 302
+}
