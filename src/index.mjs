@@ -2,6 +2,7 @@ import fastify from "fastify";
 import fastifyStatic from "@fastify/static";
 import fastifyMultipart from "@fastify/multipart";
 import path from "path";
+import os from "os";
 import { fileURLToPath } from "url";
 import { registerFiles } from "./files.mjs";
 
@@ -27,10 +28,31 @@ server.register(fastifyMultipart, {
 // 注册文件路由
 registerFiles(server);
 
+// 获取网络接口信息
+function getIPv6Address() {
+  const interfaces = os.networkInterfaces();
+
+  for (const name of Object.keys(interfaces)) {
+    for (const iface of interfaces[name]) {
+      if (
+        iface.family === "IPv6" &&
+        !iface.internal &&
+        !iface.address.startsWith("fe80")
+      ) {
+        return iface.address;
+      }
+    }
+  }
+
+  return "::1";
+}
+
 const start = async () => {
   const port = 1976;
+  const ipv6Address = getIPv6Address();
   try {
     await server.listen({ port });
+    console.log(`http://[${ipv6Address}]:${port}`);
     console.log(`http://[::1]:${port}`);
   } catch (err) {
     console.error(err);
