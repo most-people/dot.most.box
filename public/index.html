@@ -43,6 +43,18 @@
             font-size: 4rem;
             margin-bottom: 1rem;
         }
+
+
+        a {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        a:hover {
+            color: #764ba2;
+            text-decoration: underline;
+        }
     </style>
 </head>
 
@@ -51,8 +63,23 @@
         <div class="emoji">🎉</div>
         <h1>DOT.MOST.BOX</h1>
         <p>节点已成功运行</p>
+        <a id="ipv6" href="#" target="_blank"></a>
         <p>為 全 人 類 徹 底 解 放 奮 鬥 終 身</p>
     </div>
+
+    <script>
+        // 页面加载完成后获取IPv6地址
+        document.addEventListener('DOMContentLoaded', async () => {
+            try {
+                const response = await fetch('/api/ipv6');
+                const data = await response.json();
+                ipv6.textContent = data.url;
+                ipv6.href = data.url;
+            } catch (error) {
+                console.error(error)
+            }
+        });
+    </script>
 </body>
 
 </html>
