@@ -31,7 +31,7 @@ server.register(fastifyMultipart, {
 registerFiles(server);
 
 // 添加IPv6地址API接口
-server.get("/api/ipv6", async (request, reply) => {
+server.get("/ipv6", async (request, reply) => {
   const interfaces = os.networkInterfaces();
   for (const name of Object.keys(interfaces)) {
     for (const iface of interfaces[name]) {

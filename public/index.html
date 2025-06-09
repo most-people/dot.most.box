@@ -71,7 +71,7 @@
         // 页面加载完成后获取IPv6地址
         document.addEventListener('DOMContentLoaded', async () => {
             try {
-                const response = await fetch('/api/ipv6');
+                const response = await fetch('/ipv6');
                 const data = await response.json();
                 ipv6.textContent = data.url;
                 ipv6.href = data.url;
